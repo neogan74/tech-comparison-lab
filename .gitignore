@@ -4,6 +4,7 @@ benchmarks/*/bin/
 # Experiment raw results (keep .gitkeep and named summaries)
 experiments/databases/postgresql-vs-mongodb/results/*.json
 experiments/cache/redis-vs-valkey/results/*.json
+experiments/messaging/kafka-vs-rabbitmq/results/*.json
 
 # Docker env (has real passwords)
 deployments/docker-compose/.env
