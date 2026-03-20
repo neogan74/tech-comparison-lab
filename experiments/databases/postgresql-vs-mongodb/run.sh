@@ -57,7 +57,7 @@ check_deps() {
 build_binary() {
   log "Building loadgen-db..."
   mkdir -p "$LOADGEN_DIR/bin"
-  (cd "$LOADGEN_DIR" && go mod tidy && go build -o "$BINARY" ./...)
+  (cd "$LOADGEN_DIR" && go mod tidy && go build -o "$BINARY" .)
   log "Binary: $BINARY"
 }
 
