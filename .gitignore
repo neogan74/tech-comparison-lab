@@ -1,5 +1,9 @@
 # Benchmark binaries
 benchmarks/*/bin/
+benchmarks/loadgen-http/loadgen-http
+
+# App binaries
+apps/bench-api/bench-api
 
 # Experiment raw results (keep .gitkeep and named summaries)
 experiments/databases/postgresql-vs-mongodb/results/*.json
@@ -13,3 +17,4 @@ deployments/docker-compose/.env
 *.test
 coverage.out
 experiments/analytics/clickhouse-vs-postgresql/results/*.json
+experiments/api/grpc-vs-rest/results/*.json
