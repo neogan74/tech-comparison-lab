@@ -18,3 +18,7 @@ deployments/docker-compose/.env
 coverage.out
 experiments/analytics/clickhouse-vs-postgresql/results/*.json
 experiments/api/grpc-vs-rest/results/*.json
+experiments/orchestration/k8s-vs-openshift/results/*.json
+
+# k8s loadgen binary
+benchmarks/loadgen-k8s/loadgen-k8s
