@@ -91,6 +91,8 @@ already exists, `run.sh` falls back to that binary.
 | Prometheus | 9095 | http://localhost:9095 |
 | Grafana | 3003 | http://localhost:3003 |
 
+ClickHouse benchmark credentials are `bench` / `benchpass`.
+
 ## Sample Results (10M rows, MacBook Pro M2 Pro)
 
 ```

@@ -1,6 +1,10 @@
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:24.3
+    environment:
+      CLICKHOUSE_DB: bench
+      CLICKHOUSE_USER: bench
+      CLICKHOUSE_PASSWORD: benchpass
     ports:
       - "9000:9000"   # native protocol (benchmark tool)
       - "8123:8123"   # HTTP interface
@@ -38,9 +42,9 @@ services:
   clickhouse-exporter:
     image: f1yegor/clickhouse-exporter:latest
     environment:
-      CLICKHOUSE_USER: default
-      CLICKHOUSE_PASSWORD: ""
-    command: ["-scrape_uri=http://clickhouse:8123/"]
+      CLICKHOUSE_USER: bench
+      CLICKHOUSE_PASSWORD: benchpass
+    command: ["-scrape_uri=http://bench:benchpass@clickhouse:8123/"]
     ports:
       - "9116:9116"
     depends_on:
