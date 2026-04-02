@@ -8,8 +8,8 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 |------------|--------|------------|
 | PostgreSQL vs MongoDB | smoke-tested | CI validates `loadgen-db`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | gRPC vs REST | smoke-tested | CI validates server/loadgen modules and runs end-to-end smoke |
+| Redis vs Valkey | smoke-tested | CI validates `loadgen-cache`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | ClickHouse vs PostgreSQL | in progress | no CI yet |
-| Redis vs Valkey | in progress | no CI yet |
 | Kafka vs RabbitMQ | in progress | no CI yet |
 | Kubernetes vs OpenShift | in progress | no CI yet |
 

@@ -35,6 +35,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	cfg := runConfig{
+		op: *op, count: *count, iterations: *iterations,
+		pipeSize: *pipeSize, workers: *workers,
+	}
+	if err := validateConfig(*db, cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
 	if *addr == "" {
 		envKey := map[string]string{"redis": "REDIS_ADDR", "valkey": "VALKEY_ADDR"}[*db]
 		*addr = os.Getenv(envKey)
@@ -62,10 +71,6 @@ func main() {
 		fmt.Printf("%s: flushed\n", *db)
 	}
 
-	cfg := runConfig{
-		op: *op, count: *count, iterations: *iterations,
-		pipeSize: *pipeSize, workers: *workers,
-	}
 	results := run(ctx, bench, *db, cfg)
 
 	if len(results) > 0 {
@@ -91,6 +96,36 @@ type runConfig struct {
 	iterations int
 	pipeSize   int
 	workers    int
+}
+
+func validateConfig(db string, cfg runConfig) error {
+	validOps := map[string]bool{
+		"set":          true,
+		"get":          true,
+		"pipeline-set": true,
+		"pipeline-get": true,
+		"mixed":        true,
+		"all":          true,
+	}
+	if !validOps[cfg.op] {
+		return fmt.Errorf("unknown --op %q, want set|get|pipeline-set|pipeline-get|mixed|all", cfg.op)
+	}
+	if db != "redis" && db != "valkey" {
+		return fmt.Errorf("unknown --db %q", db)
+	}
+	if cfg.count < 1 {
+		return fmt.Errorf("--count must be >= 1")
+	}
+	if cfg.iterations < 1 {
+		return fmt.Errorf("--iterations must be >= 1")
+	}
+	if cfg.pipeSize < 1 {
+		return fmt.Errorf("--pipe-size must be >= 1")
+	}
+	if cfg.workers < 1 {
+		return fmt.Errorf("--workers must be >= 1")
+	}
+	return nil
 }
 
 func run(ctx context.Context, bench *client.Bench, db string, cfg runConfig) []report.Result {
