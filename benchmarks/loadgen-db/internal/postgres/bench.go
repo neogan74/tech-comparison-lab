@@ -161,6 +161,14 @@ func (b *Bench) Agg(ctx context.Context, iterations int) ([]time.Duration, time.
 		if err != nil {
 			return durs, time.Since(start), err
 		}
+		for rows.Next() {
+			var userID string
+			var totalQty int64
+			if err := rows.Scan(&userID, &totalQty); err != nil {
+				rows.Close()
+				return durs, time.Since(start), err
+			}
+		}
 		rows.Close()
 		if err := rows.Err(); err != nil {
 			return durs, time.Since(start), err

@@ -16,17 +16,21 @@ Side-by-side benchmark comparing **PostgreSQL 16 (JSONB + GIN index)** vs
 ## Quick Start
 
 ```bash
-# 1. Clone and enter experiment directory
+# 1. Enter experiment directory
 cd experiments/databases/postgresql-vs-mongodb
 
-# 2. Run full benchmark (10M documents, ~30–60 min)
+# 2. Recommended first run: clean volumes, then execute the full benchmark
 ./run.sh --clean
 
 # 3. Or smoke test only (1k docs, ~30 sec)
 ./run.sh --smoke-only
 ```
 
-Results are printed to stdout and saved to `results/summary.json`.
+Results are printed to stdout and saved under `results/`:
+
+- `results/postgres.json`
+- `results/mongo.json`
+- `results/summary.json`
 
 ## What Is Benchmarked
 
@@ -87,6 +91,7 @@ Override via environment variables before running:
 ```bash
 INSERT_COUNT=1000000 WORKERS=4 ./run.sh    # 1M docs, 4 workers
 SMOKE_ONLY=true ./run.sh                   # equivalent to --smoke-only
+SKIP_BUILD=true ./run.sh --smoke-only      # use existing binary without rebuilding
 ```
 
 | Variable | Default | Description |
@@ -99,6 +104,11 @@ SMOKE_ONLY=true ./run.sh                   # equivalent to --smoke-only
 | `UPDATE_ITERATIONS` | 100 | Update benchmark iterations |
 | `POSTGRES_PASSWORD` | benchpass | PG password |
 | `MONGO_PASSWORD` | benchpass | Mongo password |
+| `SMOKE_ONLY` | false | Run only the 1k-document smoke test |
+| `SKIP_BUILD` | false | Skip `go build` and use existing binary |
+
+If `go` is unavailable but `benchmarks/loadgen-db/bin/loadgen-db` already
+exists, `run.sh` automatically falls back to that binary.
 
 ## Infrastructure
 
@@ -125,8 +135,9 @@ Copy `.env.example` to `.env` in `deployments/docker-compose/` and override port
 You're on `mongo:7`. If health check fails, the image may lack `mongosh` — try
 pulling the latest: `docker pull mongo:7`.
 
-**`go mod tidy` errors**
-Ensure GOPROXY is reachable: `GOPROXY=https://proxy.golang.org go mod tidy`
+**First build fails downloading modules**
+The first `go build` may need internet access to download Go modules. If the
+binary already exists, run with `SKIP_BUILD=true`.
 
 **Results directory permission error**
 `mkdir -p experiments/databases/postgresql-vs-mongodb/results`
@@ -151,4 +162,5 @@ postgres   update           5.21       9.43      16.78        190         -
 mongo      update           4.87       8.91      15.23        205         -
 ```
 
-*(Actual results will vary; run on your hardware for authoritative numbers)*
+The sample table above only shows the expected shape of the output.
+Actual results will vary; run on your hardware for authoritative numbers.

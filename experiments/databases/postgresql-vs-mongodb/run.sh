@@ -29,36 +29,84 @@ UPDATE_ITERATIONS="${UPDATE_ITERATIONS:-100}"
 WORKERS="${WORKERS:-8}"
 BATCH_SIZE="${BATCH_SIZE:-1000}"
 SMOKE_COUNT="${SMOKE_COUNT:-1000}"
+SMOKE_ONLY="${SMOKE_ONLY:-false}"
+SKIP_BUILD="${SKIP_BUILD:-false}"
 
 CLEAN=false
-SMOKE_ONLY=false
 for arg in "$@"; do
   case $arg in
     --clean)       CLEAN=true ;;
     --smoke-only)  SMOKE_ONLY=true ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: ./run.sh [--clean] [--smoke-only]
+
+Options:
+  --clean       remove benchmark volumes before starting the stack
+  --smoke-only  run the 1k-document smoke benchmark only
+
+Environment overrides:
+  INSERT_COUNT, QUERY_ITERATIONS, AGG_ITERATIONS, UPDATE_ITERATIONS
+  WORKERS, BATCH_SIZE, SMOKE_COUNT
+  POSTGRES_PASSWORD, MONGO_PASSWORD
+  SMOKE_ONLY=true
+  SKIP_BUILD=true   use existing binary at benchmarks/loadgen-db/bin/loadgen-db
+EOF
+      exit 0
+      ;;
+    *)
+      echo "error: unknown argument '$arg'" >&2
+      exit 1
+      ;;
   esac
 done
 
 # --- Helpers ---
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
+
 check_deps() {
-  for cmd in docker go jq; do
+  for cmd in docker jq; do
     if ! command -v "$cmd" &>/dev/null; then
       echo "error: '$cmd' not found. Install it and re-run." >&2
       exit 1
     fi
   done
+  if ! docker compose version &>/dev/null; then
+    echo "error: Docker Compose v2 is required." >&2
+    exit 1
+  fi
   if ! docker info &>/dev/null; then
     echo "error: Docker daemon is not running." >&2; exit 1
   fi
 }
 
 build_binary() {
-  log "Building loadgen-db..."
-  mkdir -p "$LOADGEN_DIR/bin"
-  (cd "$LOADGEN_DIR" && go mod tidy && go build -o "$BINARY" .)
-  log "Binary: $BINARY"
+  if [ "$SKIP_BUILD" = true ]; then
+    if [ ! -x "$BINARY" ]; then
+      echo "error: SKIP_BUILD=true but binary is missing: $BINARY" >&2
+      exit 1
+    fi
+    log "Using existing binary: $BINARY"
+    return
+  fi
+
+  if have_cmd go; then
+    log "Building loadgen-db..."
+    mkdir -p "$LOADGEN_DIR/bin"
+    (cd "$LOADGEN_DIR" && go build -o "$BINARY" .)
+    log "Binary: $BINARY"
+    return
+  fi
+
+  if [ -x "$BINARY" ]; then
+    log "Go not found; using existing binary: $BINARY"
+    return
+  fi
+
+  echo "error: 'go' not found and no prebuilt binary is available at $BINARY" >&2
+  exit 1
 }
 
 start_stack() {
@@ -159,10 +207,29 @@ merge_results() {
   jq -s '{
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
-    insert_count: '"$INSERT_COUNT"',
+    config: {
+      insert_count: '"$INSERT_COUNT"',
+      query_iterations: '"$QUERY_ITERATIONS"',
+      agg_iterations: '"$AGG_ITERATIONS"',
+      update_iterations: '"$UPDATE_ITERATIONS"',
+      workers: '"$WORKERS"',
+      batch_size: '"$BATCH_SIZE"'
+    },
     results: [.[].results[]]
   }' "$RESULTS_DIR/postgres.json" "$RESULTS_DIR/mongo.json" \
     > "$RESULTS_DIR/summary.json"
+}
+
+verify_results() {
+  for path in \
+    "$RESULTS_DIR/postgres.json" \
+    "$RESULTS_DIR/mongo.json" \
+    "$RESULTS_DIR/summary.json"; do
+    if [ ! -s "$path" ]; then
+      echo "error: expected results file is missing or empty: $path" >&2
+      exit 1
+    fi
+  done
 }
 
 print_table() {
@@ -204,6 +271,7 @@ fi
 smoke_test
 run_full
 merge_results
+verify_results
 print_table
 
 log "Done. Results: $RESULTS_DIR/summary.json"

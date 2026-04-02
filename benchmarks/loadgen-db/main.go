@@ -38,6 +38,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Apply iteration defaults
+	qi, ai, ui := resolveIters(*count, *queryIter, *aggIter, *updateIter)
+	cfg := runConfig{
+		op: *op, count: *count, queryIter: qi, aggIter: ai, updateIter: ui,
+		batch: *batch, workers: *workers, truncate: *truncate, dryRun: *dryRun,
+	}
+	if err := validateConfig(*db, cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
 	// DSN fallback to env vars
 	if *dsn == "" {
 		switch *db {
@@ -53,16 +64,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Apply iteration defaults
-	qi, ai, ui := resolveIters(*count, *queryIter, *aggIter, *updateIter)
-
 	ctx := context.Background()
 	var results []report.Result
 
-	cfg := runConfig{
-		op: *op, count: *count, queryIter: qi, aggIter: ai, updateIter: ui,
-		batch: *batch, workers: *workers, truncate: *truncate, dryRun: *dryRun,
-	}
 	switch *db {
 	case "postgres":
 		results = runPostgres(ctx, *dsn, cfg)
@@ -116,6 +120,47 @@ func resolveIters(count, qi, ai, ui int) (int, int, int) {
 		}
 	}
 	return qi, ai, ui
+}
+
+func validateConfig(db string, cfg runConfig) error {
+	validOps := map[string]map[string]bool{
+		"postgres": {
+			"insert": true,
+			"query":  true,
+			"agg":    true,
+			"update": true,
+			"all":    true,
+		},
+		"mongo": {
+			"insert": true,
+			"query":  true,
+			"agg":    true,
+			"update": true,
+			"all":    true,
+		},
+	}
+	if !validOps[db][cfg.op] {
+		return fmt.Errorf("unknown --op %q, want insert|query|agg|update|all", cfg.op)
+	}
+	if cfg.count < 1 {
+		return fmt.Errorf("--count must be >= 1")
+	}
+	if cfg.batch < 1 {
+		return fmt.Errorf("--batch must be >= 1")
+	}
+	if cfg.workers < 1 {
+		return fmt.Errorf("--workers must be >= 1")
+	}
+	if cfg.queryIter < 1 {
+		return fmt.Errorf("--query-iter must be >= 1")
+	}
+	if cfg.aggIter < 1 {
+		return fmt.Errorf("--agg-iter must be >= 1")
+	}
+	if cfg.updateIter < 1 {
+		return fmt.Errorf("--update-iter must be >= 1")
+	}
+	return nil
 }
 
 func runPostgres(ctx context.Context, dsn string, cfg runConfig) []report.Result {
