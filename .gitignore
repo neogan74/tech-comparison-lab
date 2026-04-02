@@ -12,3 +12,4 @@ deployments/docker-compose/.env
 # Go build artifacts
 *.test
 coverage.out
+experiments/analytics/clickhouse-vs-postgresql/results/*.json
