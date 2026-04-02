@@ -156,7 +156,8 @@ func (b *Bench) Agg(ctx context.Context, iterations int) ([]time.Duration, time.
 		if err != nil {
 			return durs, time.Since(start), err
 		}
-		if err := cur.Close(ctx); err != nil {
+		var results []bson.M
+		if err := cur.All(ctx, &results); err != nil {
 			return durs, time.Since(start), err
 		}
 		durs = append(durs, time.Since(t))

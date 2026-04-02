@@ -2,6 +2,17 @@
 
 Main focus is compare technologies in terms of performance, scalability, and ease of use.
 
+## Current Status
+
+| Experiment | Status | Validation |
+|------------|--------|------------|
+| PostgreSQL vs MongoDB | implemented | CI validates `loadgen-db`, `run.sh`, and Docker Compose config |
+| ClickHouse vs PostgreSQL | in progress | no CI yet |
+| Redis vs Valkey | in progress | no CI yet |
+| Kafka vs RabbitMQ | in progress | no CI yet |
+| gRPC vs REST | in progress | no CI yet |
+| Kubernetes vs OpenShift | in progress | no CI yet |
+
 Here is the list of technologies to compare:
 
 ## Databases
