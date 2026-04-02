@@ -23,6 +23,7 @@ WORKERS="${WORKERS:-4}"
 QUERY_ITER="${QUERY_ITER:-5}"
 SMOKE_COUNT="${SMOKE_COUNT:-100000}"
 SMOKE_ITER="${SMOKE_ITER:-2}"
+SKIP_BUILD="${SKIP_BUILD:-false}"
 
 CH_ADDR="localhost:9000"
 PG_DSN="postgres://bench:benchpass@localhost:5433/bench?sslmode=disable"
@@ -33,25 +34,72 @@ for arg in "$@"; do
   case $arg in
     --clean)      CLEAN=true ;;
     --smoke-only) SMOKE_ONLY=true ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: ./run.sh [--clean] [--smoke-only]
+
+Options:
+  --clean       remove existing volumes before starting the stack
+  --smoke-only  run the smoke benchmark only
+
+Environment overrides:
+  ROW_COUNT
+  BATCH_SIZE
+  WORKERS
+  QUERY_ITER
+  SMOKE_COUNT
+  SMOKE_ITER
+  SKIP_BUILD=true
+EOF
+      exit 0
+      ;;
+    *)
+      echo "error: unknown argument '$arg'" >&2
+      exit 1
+      ;;
   esac
 done
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 check_deps() {
-  for cmd in docker go jq; do
+  for cmd in docker jq; do
     if ! command -v "$cmd" &>/dev/null; then
       echo "error: '$cmd' not found." >&2; exit 1
     fi
   done
+  if ! docker compose version &>/dev/null; then
+    echo "error: Docker Compose v2 is required." >&2; exit 1
+  fi
   docker info &>/dev/null || { echo "error: Docker not running." >&2; exit 1; }
 }
 
 build_binary() {
-  log "Building loadgen-analytics..."
-  mkdir -p "$LOADGEN_DIR/bin"
-  (cd "$LOADGEN_DIR" && go mod tidy && go build -o "$BINARY" .)
-  log "Binary: $BINARY"
+  if [ "$SKIP_BUILD" = true ]; then
+    if [ ! -x "$BINARY" ]; then
+      echo "error: SKIP_BUILD=true but binary is missing: $BINARY" >&2
+      exit 1
+    fi
+    log "Using existing binary: $BINARY"
+    return
+  fi
+
+  if have_cmd go; then
+    log "Building loadgen-analytics..."
+    mkdir -p "$LOADGEN_DIR/bin"
+    (cd "$LOADGEN_DIR" && go build -o "$BINARY" .)
+    log "Binary: $BINARY"
+    return
+  fi
+
+  if [ -x "$BINARY" ]; then
+    log "Go not found; using existing binary: $BINARY"
+    return
+  fi
+
+  echo "error: 'go' not found and no prebuilt binary is available at $BINARY" >&2
+  exit 1
 }
 
 start_stack() {
@@ -129,10 +177,27 @@ merge_results() {
   jq -s '{
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
-    row_count: '"$ROW_COUNT"',
+    config: {
+      row_count: '"$ROW_COUNT"',
+      batch_size: '"$BATCH_SIZE"',
+      workers: '"$WORKERS"',
+      query_iter: '"$QUERY_ITER"'
+    },
     results: [.[].results[]]
   }' "$RESULTS_DIR/clickhouse.json" "$RESULTS_DIR/postgres.json" \
     > "$RESULTS_DIR/summary.json"
+}
+
+verify_results() {
+  for path in \
+    "$RESULTS_DIR/clickhouse.json" \
+    "$RESULTS_DIR/postgres.json" \
+    "$RESULTS_DIR/summary.json"; do
+    if [ ! -s "$path" ]; then
+      echo "error: expected results file is missing or empty: $path" >&2
+      exit 1
+    fi
+  done
 }
 
 print_table() {
@@ -170,6 +235,7 @@ fi
 smoke_test
 run_full
 merge_results
+verify_results
 print_table
 
 log "Done. Results: $RESULTS_DIR/summary.json"

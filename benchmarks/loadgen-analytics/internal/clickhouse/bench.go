@@ -21,9 +21,9 @@ func New(ctx context.Context, addr string) (*Bench, error) {
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{addr},
 		Auth: clickhouse.Auth{
-			Database: "default",
-			Username: "default",
-			Password: "",
+			Database: "bench",
+			Username: "bench",
+			Password: "benchpass",
 		},
 		Compression: &clickhouse.Compression{Method: clickhouse.CompressionLZ4},
 	})

@@ -21,7 +21,11 @@ cd experiments/analytics/clickhouse-vs-postgresql
 ./run.sh --smoke-only                    # 100k rows, ~2 min
 ./run.sh --clean                         # 10M rows, ~10-30 min
 ROW_COUNT=100000000 ./run.sh --clean     # 100M rows, ~2-4 hours
+SKIP_BUILD=true ./run.sh --smoke-only    # reuse existing binary
 ```
+
+Full runs emit `results/clickhouse.json`, `results/postgres.json`, and
+`results/summary.json`.
 
 ## Schema
 
@@ -70,6 +74,12 @@ ROW_COUNT=100000000 QUERY_ITER=10 ./run.sh --clean   # 100M rows, 10 iters
 | `BATCH_SIZE` | 100000 | Insert batch size |
 | `WORKERS` | 4 | Concurrent insert workers |
 | `QUERY_ITER` | 5 | Query benchmark iterations |
+| `SMOKE_COUNT` | 100000 | Rows inserted during smoke run |
+| `SMOKE_ITER` | 2 | Query iterations during smoke run |
+| `SKIP_BUILD` | false | Skip `go build` and use existing binary |
+
+If `go` is unavailable but `benchmarks/loadgen-analytics/bin/loadgen-analytics`
+already exists, `run.sh` falls back to that binary.
 
 ## Infrastructure
 
@@ -80,6 +90,8 @@ ROW_COUNT=100000000 QUERY_ITER=10 ./run.sh --clean   # 100M rows, 10 iters
 | PostgreSQL | 5433 | postgres://bench:benchpass@localhost:5433/bench |
 | Prometheus | 9095 | http://localhost:9095 |
 | Grafana | 3003 | http://localhost:3003 |
+
+ClickHouse benchmark credentials are `bench` / `benchpass`.
 
 ## Sample Results (10M rows, MacBook Pro M2 Pro)
 
@@ -109,3 +121,6 @@ postgres       distinct-users 10000000    3100.0     3600.0       4100.0        
 **`clickhouse-client` not found** — Only inside the container; `run.sh` uses `docker compose exec`.
 
 **Port 8123 conflict** — Check if another ClickHouse runs locally: `lsof -i :8123`.
+
+**First build fails downloading modules** — The first `go build` may require
+internet access. If the binary already exists, run with `SKIP_BUILD=true`.
