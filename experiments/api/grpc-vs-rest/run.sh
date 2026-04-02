@@ -14,20 +14,54 @@ GRPC_ADDR="localhost:50051"
 
 COUNT=${COUNT:-100000}
 WORKERS=${WORKERS:-50}
-SMOKE_COUNT=1000
+SMOKE_COUNT=${SMOKE_COUNT:-1000}
 SMOKE=${SMOKE_ONLY:-0}
+SKIP_BUILD=${SKIP_BUILD:-0}
 
 # ── colours ───────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[run]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[warn]${NC} $*"; }
 
-# ── build ─────────────────────────────────────────────────────────────────────
-info "Building bench-api server..."
-(cd "$API_DIR" && go build -o bench-api .)
+usage() {
+  cat <<'EOF'
+Usage: ./run.sh [--smoke-only]
 
-info "Building loadgen-http..."
-(cd "$BENCH_DIR" && go build -o loadgen-http .)
+Environment overrides:
+  COUNT
+  WORKERS
+  SMOKE_COUNT
+  SMOKE_ONLY=1
+  SKIP_BUILD=1
+EOF
+}
+
+# ── build ─────────────────────────────────────────────────────────────────────
+for arg in "$@"; do
+  case "$arg" in
+    --smoke-only) ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "ERROR: unknown argument '$arg'" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [[ "$SKIP_BUILD" != "1" ]]; then
+  info "Building bench-api server..."
+  (cd "$API_DIR" && go build -o bench-api .)
+
+  info "Building loadgen-http..."
+  (cd "$BENCH_DIR" && go build -o loadgen-http .)
+else
+  [[ -x "$API_BIN" ]] || { echo "ERROR: missing bench-api binary: $API_BIN" >&2; exit 1; }
+  [[ -x "$BENCH_BIN" ]] || { echo "ERROR: missing loadgen-http binary: $BENCH_BIN" >&2; exit 1; }
+  info "Using existing binaries"
+fi
 
 # ── start server ──────────────────────────────────────────────────────────────
 stop_server() {
@@ -65,6 +99,9 @@ info "Smoke test (${SMOKE_COUNT} requests per op, both protocols)..."
 "$BENCH_BIN" --proto grpc --op all --count "$SMOKE_COUNT" --workers 10 --addr "$GRPC_ADDR" \
   --out "$RESULTS_DIR/smoke-grpc.json"
 
+[[ -s "$RESULTS_DIR/smoke-rest.json" ]] || { echo "ERROR: smoke-rest.json missing" >&2; exit 1; }
+[[ -s "$RESULTS_DIR/smoke-grpc.json" ]] || { echo "ERROR: smoke-grpc.json missing" >&2; exit 1; }
+
 info "Smoke test passed"
 
 if [[ "$SMOKE" == "1" || "${1:-}" == "--smoke-only" ]]; then
@@ -96,14 +133,14 @@ if command -v jq &>/dev/null && [[ -f "$RESULTS_DIR/rest.json" && -f "$RESULTS_D
   printf "%-20s  %8s %8s %8s %8s %8s %8s\n" "operation" "REST RPS" "gRPC RPS" "REST p50" "gRPC p50" "REST p99" "gRPC p99"
   printf "%-20s  %8s %8s %8s %8s %8s %8s\n" "─────────────────────" "────────" "────────" "────────" "────────" "────────" "────────"
 
-  ops=$(jq -r '.[].op' "$RESULTS_DIR/rest.json")
+  ops=$(jq -r '.results[].op' "$RESULTS_DIR/rest.json")
   for op in $ops; do
-    r_rps=$(jq -r --arg op "$op" '.[] | select(.op==$op) | .throughput_rps' "$RESULTS_DIR/rest.json" | xargs printf "%.0f")
-    g_rps=$(jq -r --arg op "$op" '.[] | select(.op==$op) | .throughput_rps' "$RESULTS_DIR/grpc.json" | xargs printf "%.0f")
-    r_p50=$(jq -r --arg op "$op" '.[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/rest.json" | xargs printf "%.2f")
-    g_p50=$(jq -r --arg op "$op" '.[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/grpc.json" | xargs printf "%.2f")
-    r_p99=$(jq -r --arg op "$op" '.[] | select(.op==$op) | .p99_ms' "$RESULTS_DIR/rest.json" | xargs printf "%.2f")
-    g_p99=$(jq -r --arg op "$op" '.[] | select(.op==$op) | .p99_ms' "$RESULTS_DIR/grpc.json" | xargs printf "%.2f")
+    r_rps=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .throughput_rps' "$RESULTS_DIR/rest.json" | xargs printf "%.0f")
+    g_rps=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .throughput_rps' "$RESULTS_DIR/grpc.json" | xargs printf "%.0f")
+    r_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/rest.json" | xargs printf "%.2f")
+    g_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/grpc.json" | xargs printf "%.2f")
+    r_p99=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p99_ms' "$RESULTS_DIR/rest.json" | xargs printf "%.2f")
+    g_p99=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p99_ms' "$RESULTS_DIR/grpc.json" | xargs printf "%.2f")
     printf "%-20s  %8s %8s %8s %8s %8s %8s\n" "$op" "$r_rps" "$g_rps" "$r_p50" "$g_p50" "$r_p99" "$g_p99"
   done
   echo "════════════════════════════════════════════════════════════════════════"
@@ -114,6 +151,7 @@ if command -v jq &>/dev/null; then
   jq -s '{rest: .[0], grpc: .[1]}' \
     "$RESULTS_DIR/rest.json" "$RESULTS_DIR/grpc.json" \
     > "$RESULTS_DIR/summary.json"
+  [[ -s "$RESULTS_DIR/summary.json" ]] || { echo "ERROR: summary.json missing" >&2; exit 1; }
   info "Summary saved to $RESULTS_DIR/summary.json"
 fi
 

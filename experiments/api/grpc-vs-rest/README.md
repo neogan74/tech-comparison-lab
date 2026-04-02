@@ -29,9 +29,15 @@ Side-by-side latency and throughput comparison of **gRPC (HTTP/2)** vs **REST (H
 
 # Custom scale
 COUNT=500000 WORKERS=100 ./run.sh
+
+# Reuse prebuilt binaries
+SKIP_BUILD=1 ./run.sh --smoke-only
 ```
 
 Results are saved to `results/`.
+
+`results/rest.json` and `results/grpc.json` are per-protocol `Summary` objects.
+`results/summary.json` combines both once the full run completes.
 
 ## Expected results
 
