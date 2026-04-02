@@ -25,6 +25,7 @@ cd experiments/cache/redis-vs-valkey
 ```
 
 Results in `results/summary.json` and printed to stdout.
+Full runs also emit `results/redis.json` and `results/valkey.json`.
 
 ## Operations Benchmarked
 
@@ -63,6 +64,7 @@ appendonly no
 
 ```bash
 KEY_COUNT=1000000 WORKERS=8 ./run.sh --clean   # 1M keys, fewer workers
+SKIP_BUILD=true ./run.sh --smoke-only          # reuse existing binary
 ```
 
 | Variable | Default | Description |
@@ -71,6 +73,12 @@ KEY_COUNT=1000000 WORKERS=8 ./run.sh --clean   # 1M keys, fewer workers
 | `ITERATIONS` | 100000 | Iterations for get/pipeline-get/mixed |
 | `PIPE_SIZE` | 100 | Commands per pipeline batch |
 | `WORKERS` | 16 | Concurrent goroutines |
+| `SMOKE_COUNT` | 1000 | Keys inserted during smoke run |
+| `SMOKE_ITER` | 100 | Iterations for smoke read/mixed ops |
+| `SKIP_BUILD` | false | Skip `go build` and use existing binary |
+
+If `go` is unavailable but `benchmarks/loadgen-cache/bin/loadgen-cache` already
+exists, `run.sh` falls back to that binary.
 
 ## Infrastructure
 
@@ -116,3 +124,6 @@ valkey   mixed           1730000       0.51       0.91         1.48         -   
 **OOM: 10M keys exceed available RAM** — Reduce with `KEY_COUNT=1000000 ./run.sh`.
 
 **Port 6379 already in use** — Stop local Redis: `brew services stop redis` or `redis-cli shutdown`.
+
+**First build fails downloading modules** — The first `go build` may require
+internet access. If the binary already exists, run with `SKIP_BUILD=true`.
