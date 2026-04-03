@@ -29,7 +29,7 @@ Side-by-side benchmark of **vanilla Kubernetes** (kind) vs **OpenShift** (CRC / 
 
 ```bash
 # Kubernetes only (kind, smoke test — ~2 min)
-SMOKE_ONLY=1 ./run.sh
+./run.sh --smoke-only
 
 # Kubernetes only (full — ~15 min with 3 rounds, 20 replicas)
 ./run.sh
@@ -38,13 +38,20 @@ SMOKE_ONLY=1 ./run.sh
 OCP_CONTEXT=crc-admin ./run.sh
 
 # Keep kind cluster alive after the run
-KEEP_CLUSTER=1 ./run.sh
+./run.sh --keep-cluster
 
 # Custom scale
 COUNT=500 ROUNDS=5 REPLICAS=50 ./run.sh
+
+# Reuse a prebuilt benchmark binary
+SKIP_BUILD=true ./run.sh --smoke-only
 ```
 
-Results are saved to `results/`.
+Results are saved to `results/`:
+
+- `results/k8s.json` for the kind run
+- `results/ocp.json` for the OpenShift run when `OCP_CONTEXT` is set
+- `results/summary.json` for side-by-side output when both runs completed and `jq` is available
 
 ## Expected results
 
@@ -67,3 +74,8 @@ Results are saved to `results/`.
 | OCP cluster | OpenShift Local (CRC) or any OCP 4.x |
 | Benchmark tool | `benchmarks/loadgen-k8s` — Go CLI using `k8s.io/client-go` |
 | Workload image | `registry.k8s.io/pause:3.10` (tiny, non-root, already cached) |
+
+## Notes
+
+- CI can only smoke-test the `kind` side. The OpenShift half remains a manual run because GitHub Actions does not provide a ready OCP cluster.
+- `run.sh --help` prints the full contract, including `--clean`, `--smoke-only`, `--keep-cluster`, and `SKIP_BUILD=true`.
