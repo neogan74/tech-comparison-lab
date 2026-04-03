@@ -37,6 +37,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: unknown --db %q\n", *db)
 		os.Exit(1)
 	}
+	if err := validateConfig(*db, *op, *count, *batchSize, *consumers, *partitions); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
 	if *addr == "" {
 		envKey := map[string]string{"kafka": "KAFKA_ADDR", "rabbitmq": "RABBIT_ADDR"}[*db]
 		*addr = os.Getenv(envKey)
@@ -74,6 +78,33 @@ func main() {
 			}
 		}
 	}
+}
+
+func validateConfig(db, op string, count, batchSize, consumers, partitions int) error {
+	validOps := map[string]bool{
+		"produce": true,
+		"consume": true,
+		"all":     true,
+	}
+	if !validOps[op] {
+		return fmt.Errorf("unknown --op %q, want produce|consume|all", op)
+	}
+	if db != "kafka" && db != "rabbitmq" {
+		return fmt.Errorf("unknown --db %q", db)
+	}
+	if count < 1 {
+		return fmt.Errorf("--count must be >= 1")
+	}
+	if batchSize < 1 {
+		return fmt.Errorf("--batch must be >= 1")
+	}
+	if consumers < 1 {
+		return fmt.Errorf("--consumers must be >= 1")
+	}
+	if partitions < 1 {
+		return fmt.Errorf("--partitions must be >= 1")
+	}
+	return nil
 }
 
 func runKafka(ctx context.Context, addr, op string, count, batchSize, consumers, partitions int, topic string, clean, dryRun bool) []report.Result {

@@ -19,7 +19,11 @@ cd experiments/messaging/kafka-vs-rabbitmq
 
 ./run.sh --smoke-only        # 10k messages, ~1 min
 ./run.sh --clean             # 1M messages, ~5-15 min
+SKIP_BUILD=true ./run.sh --smoke-only
 ```
+
+Full runs emit `results/kafka.json`, `results/rabbitmq.json`, and
+`results/summary.json`.
 
 ## Operations
 
@@ -66,6 +70,11 @@ MSG_COUNT=100000 CONSUMERS=3 ./run.sh --clean
 | `BATCH_SIZE` | 1000 | Messages per batch |
 | `CONSUMERS` | 3 | Concurrent consumers |
 | `PARTITIONS` | 3 | Kafka topic partitions |
+| `SMOKE_COUNT` | 10000 | Messages sent during smoke run |
+| `SKIP_BUILD` | false | Skip `go build` and use existing binary |
+
+If `go` is unavailable but `benchmarks/loadgen-msg/bin/loadgen-msg` already
+exists, `run.sh` falls back to that binary.
 
 ## Sample Results
 
@@ -100,3 +109,6 @@ Consumer distribution (kafka):
 **RabbitMQ `confirm` mode errors** — Ensure broker allows publisher confirms (default: yes).
 
 **Consumer gets 0 messages** — Make sure `produce` ran first (`--op all` does this automatically).
+
+**First build fails downloading modules** — The first `go build` may require
+internet access. If the binary already exists, run with `SKIP_BUILD=true`.

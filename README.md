@@ -10,7 +10,7 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | gRPC vs REST | smoke-tested | CI validates server/loadgen modules and runs end-to-end smoke |
 | Redis vs Valkey | smoke-tested | CI validates `loadgen-cache`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | ClickHouse vs PostgreSQL | in progress | no CI yet |
-| Kafka vs RabbitMQ | in progress | no CI yet |
+| Kafka vs RabbitMQ | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kubernetes vs OpenShift | in progress | no CI yet |
 
 Here is the list of technologies to compare:
