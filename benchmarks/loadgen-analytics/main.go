@@ -35,6 +35,16 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: unknown --db %q\n", *db)
 		os.Exit(1)
 	}
+
+	cfg := runConfig{
+		op: *op, count: *count, batchSize: *batchSize,
+		workers: *workers, queryIter: *queryIter,
+		truncate: *truncate, dryRun: *dryRun,
+	}
+	if err := validateConfig(*db, cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
 	if *addr == "" {
 		envKey := map[string]string{"clickhouse": "CH_ADDR", "postgres": "PG_DSN"}[*db]
 		*addr = os.Getenv(envKey)
@@ -49,12 +59,6 @@ func main() {
 
 	ctx := context.Background()
 	var results []report.Result
-
-	cfg := runConfig{
-		op: *op, count: *count, batchSize: *batchSize,
-		workers: *workers, queryIter: *queryIter,
-		truncate: *truncate, dryRun: *dryRun,
-	}
 
 	switch *db {
 	case "clickhouse":
@@ -88,6 +92,36 @@ type runConfig struct {
 	queryIter int
 	truncate  bool
 	dryRun    bool
+}
+
+func validateConfig(db string, cfg runConfig) error {
+	validOps := map[string]bool{
+		"insert":         true,
+		"count-group":    true,
+		"time-range":     true,
+		"agg-revenue":    true,
+		"distinct-users": true,
+		"all":            true,
+	}
+	if !validOps[cfg.op] {
+		return fmt.Errorf("unknown --op %q, want insert|count-group|time-range|agg-revenue|distinct-users|all", cfg.op)
+	}
+	if db != "clickhouse" && db != "postgres" {
+		return fmt.Errorf("unknown --db %q", db)
+	}
+	if cfg.count < 1 {
+		return fmt.Errorf("--count must be >= 1")
+	}
+	if cfg.batchSize < 1 {
+		return fmt.Errorf("--batch must be >= 1")
+	}
+	if cfg.workers < 1 {
+		return fmt.Errorf("--workers must be >= 1")
+	}
+	if cfg.queryIter < 1 {
+		return fmt.Errorf("--query-iter must be >= 1")
+	}
+	return nil
 }
 
 func runClickhouse(ctx context.Context, addr string, cfg runConfig) []report.Result {
