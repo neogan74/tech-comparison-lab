@@ -22,6 +22,7 @@ BATCH_SIZE="${BATCH_SIZE:-1000}"
 CONSUMERS="${CONSUMERS:-3}"
 PARTITIONS="${PARTITIONS:-3}"
 SMOKE_COUNT="${SMOKE_COUNT:-10000}"
+SKIP_BUILD="${SKIP_BUILD:-false}"
 
 KAFKA_ADDR="localhost:9093"
 RABBIT_ADDR="amqp://bench:benchpass@localhost:5672/"
@@ -32,25 +33,69 @@ for arg in "$@"; do
   case $arg in
     --clean)      CLEAN=true ;;
     --smoke-only) SMOKE_ONLY=true ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: ./run.sh [--clean] [--smoke-only]
+
+Options:
+  --clean       remove existing volumes before starting the stack
+  --smoke-only  run the smoke benchmark only
+
+Environment overrides:
+  MSG_COUNT
+  BATCH_SIZE
+  CONSUMERS
+  PARTITIONS
+  SMOKE_COUNT
+  SKIP_BUILD=true
+EOF
+      exit 0
+      ;;
+    *)
+      echo "error: unknown argument '$arg'" >&2
+      exit 1
+      ;;
   esac
 done
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 check_deps() {
-  for cmd in docker go jq; do
+  for cmd in docker jq; do
     if ! command -v "$cmd" &>/dev/null; then
       echo "error: '$cmd' not found." >&2; exit 1
     fi
   done
+  docker compose version &>/dev/null || { echo "error: Docker Compose v2 is required." >&2; exit 1; }
   docker info &>/dev/null || { echo "error: Docker not running." >&2; exit 1; }
 }
 
 build_binary() {
-  log "Building loadgen-msg..."
-  mkdir -p "$LOADGEN_DIR/bin"
-  (cd "$LOADGEN_DIR" && go mod tidy && go build -o "$BINARY" .)
-  log "Binary: $BINARY"
+  if [ "$SKIP_BUILD" = true ]; then
+    if [ ! -x "$BINARY" ]; then
+      echo "error: SKIP_BUILD=true but binary is missing: $BINARY" >&2
+      exit 1
+    fi
+    log "Using existing binary: $BINARY"
+    return
+  fi
+
+  if have_cmd go; then
+    log "Building loadgen-msg..."
+    mkdir -p "$LOADGEN_DIR/bin"
+    (cd "$LOADGEN_DIR" && go build -o "$BINARY" .)
+    log "Binary: $BINARY"
+    return
+  fi
+
+  if [ -x "$BINARY" ]; then
+    log "Go not found; using existing binary: $BINARY"
+    return
+  fi
+
+  echo "error: 'go' not found and no prebuilt binary is available at $BINARY" >&2
+  exit 1
 }
 
 start_stack() {
@@ -65,7 +110,7 @@ wait_for_kafka() {
   log "Waiting for Kafka (port 9093)..."
   local max=30 i=0
   until docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T kafka \
-      kafka-topics.sh --bootstrap-server localhost:9092 --list &>/dev/null; do
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list &>/dev/null; do
     i=$((i+1))
     [ $i -ge $max ] && { echo "error: Kafka not ready after 300s" >&2; exit 1; }
     sleep 10
@@ -129,10 +174,27 @@ merge_results() {
   jq -s '{
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
-    msg_count: '"$MSG_COUNT"',
+    config: {
+      msg_count: '"$MSG_COUNT"',
+      batch_size: '"$BATCH_SIZE"',
+      consumers: '"$CONSUMERS"',
+      partitions: '"$PARTITIONS"'
+    },
     results: [.[].results[]]
   }' "$RESULTS_DIR/kafka.json" "$RESULTS_DIR/rabbitmq.json" \
     > "$RESULTS_DIR/summary.json"
+}
+
+verify_results() {
+  for path in \
+    "$RESULTS_DIR/kafka.json" \
+    "$RESULTS_DIR/rabbitmq.json" \
+    "$RESULTS_DIR/summary.json"; do
+    if [ ! -s "$path" ]; then
+      echo "error: expected results file is missing or empty: $path" >&2
+      exit 1
+    fi
+  done
 }
 
 print_table() {
@@ -171,9 +233,10 @@ fi
 smoke_test
 run_full
 merge_results
+verify_results
 print_table
 
 log "Done. Results: $RESULTS_DIR/summary.json"
-log "Kafka UI:   http://localhost:15672  (RabbitMQ Management)"
+log "RabbitMQ Management: http://localhost:15672"
 log "Prometheus: http://localhost:9094"
 log "Grafana:    http://localhost:3002"
