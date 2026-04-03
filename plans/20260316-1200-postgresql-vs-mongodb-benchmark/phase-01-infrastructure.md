@@ -2,7 +2,7 @@
 
 **Parent plan:** [plan.md](./plan.md)
 **Dependencies:** none
-**Status:** pending
+**Status:** completed
 **Priority:** high (blocks phases 02, 03)
 **Date:** 2026-03-16
 
@@ -162,13 +162,13 @@ db.orders.createIndex({ "status": 1, "created_at": -1 })
 
 ## Todo
 
-- [ ] Write `docker-compose.yml` with all 6 services
-- [ ] Write `postgres/init.sql` (idempotent schema + indexes)
-- [ ] Write `prometheus.yml` scrape config
-- [ ] Write Grafana datasource provisioning file
-- [ ] Write `.env.example`
-- [ ] Verify `docker compose config` passes without errors
-- [ ] Document port map and credentials in phase README
+- [x] Write `docker-compose.yml` with all 6 services
+- [x] Write `postgres/init.sql` (idempotent schema + indexes)
+- [x] Write `prometheus.yml` scrape config
+- [x] Write Grafana datasource provisioning file
+- [x] Write `.env.example`
+- [x] Verify `docker compose config` passes without errors
+- [x] Document port map and credentials in phase README
 
 ---
 

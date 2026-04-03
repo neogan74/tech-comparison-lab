@@ -13,6 +13,18 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | Kafka vs RabbitMQ | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kubernetes vs OpenShift | in progress | no CI yet |
 
+## Repository Commands
+
+Use the repo-level `Makefile` as the single local entrypoint:
+
+```bash
+make help
+make validate-all
+make smoke-all
+make validate EXP=grpc-vs-rest
+make smoke EXP=postgresql-vs-mongodb
+```
+
 Here is the list of technologies to compare:
 
 ## Databases
