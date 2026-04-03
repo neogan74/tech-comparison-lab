@@ -110,7 +110,7 @@ wait_for_kafka() {
   log "Waiting for Kafka (port 9093)..."
   local max=30 i=0
   until docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T kafka \
-      kafka-topics.sh --bootstrap-server localhost:9092 --list &>/dev/null; do
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list &>/dev/null; do
     i=$((i+1))
     [ $i -ge $max ] && { echo "error: Kafka not ready after 300s" >&2; exit 1; }
     sleep 10

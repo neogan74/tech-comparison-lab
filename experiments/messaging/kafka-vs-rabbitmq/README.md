@@ -102,7 +102,7 @@ Consumer distribution (kafka):
 
 **Kafka health check fails (>5 min)** — Bitnami Kafka KRaft needs ~30s to initialize. `./run.sh` waits up to 5 min.
 
-**`kafka-topics.sh: command not found`** — Only inside the container. The `run.sh` uses `docker compose exec`.
+**`kafka-topics.sh: command not found`** — Expected on the host. The experiment runs Kafka CLI inside the container via `/opt/kafka/bin/kafka-topics.sh`.
 
 **Port 9093 conflicts** — Check `lsof -i :9093`. Kill the conflicting process or change the port in `docker-compose.yml`.
 
