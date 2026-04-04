@@ -12,6 +12,7 @@ EXPERIMENTS := \
 .PHONY: \
 	help \
 	list \
+	collect-results \
 	validate \
 	smoke \
 	validate-all \
@@ -23,6 +24,7 @@ help:
 	@echo "Repository commands"
 	@echo ""
 	@echo "  make list"
+	@echo "  make collect-results"
 	@echo "  make validate-all"
 	@echo "  make smoke-all"
 	@echo "  make validate EXP=<experiment>"
@@ -33,6 +35,9 @@ help:
 
 list:
 	@for exp in $(EXPERIMENTS); do echo "$$exp"; done
+
+collect-results:
+	bash "./scripts/collect-results.sh"
 
 validate:
 ifndef EXP
