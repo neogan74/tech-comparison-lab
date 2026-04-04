@@ -25,6 +25,8 @@ make validate EXP=grpc-vs-rest
 make smoke EXP=postgresql-vs-mongodb
 ```
 
+Merged experiment artifacts now follow [`results-summary/v1`](/Users/neogan/GitHub/tech-comparison-lab/docs/results-summary-v1.md).
+
 Here is the list of technologies to compare:
 
 ## Databases

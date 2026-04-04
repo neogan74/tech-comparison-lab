@@ -173,14 +173,26 @@ run_full() {
 merge_results() {
   log "Merging results..."
   jq -s '{
+    schema_version: "results-summary/v1",
+    experiment: {
+      id: "redis-vs-valkey",
+      name: "Redis vs Valkey",
+      category: "cache",
+      path: "experiments/cache/redis-vs-valkey"
+    },
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
+    mode: "full",
     config: {
       key_count: '"$KEY_COUNT"',
       iterations: '"$ITERATIONS"',
       pipe_size: '"$PIPE_SIZE"',
       workers: '"$WORKERS"'
     },
+    sources: [
+      {name: "redis", file: "results/redis.json"},
+      {name: "valkey", file: "results/valkey.json"}
+    ],
     results: [.[].results[]]
   }' "$RESULTS_DIR/redis.json" "$RESULTS_DIR/valkey.json" \
     > "$RESULTS_DIR/summary.json"

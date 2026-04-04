@@ -172,14 +172,26 @@ run_full() {
 merge_results() {
   log "Merging results..."
   jq -s '{
+    schema_version: "results-summary/v1",
+    experiment: {
+      id: "kafka-vs-rabbitmq",
+      name: "Kafka vs RabbitMQ",
+      category: "messaging",
+      path: "experiments/messaging/kafka-vs-rabbitmq"
+    },
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
+    mode: "full",
     config: {
       msg_count: '"$MSG_COUNT"',
       batch_size: '"$BATCH_SIZE"',
       consumers: '"$CONSUMERS"',
       partitions: '"$PARTITIONS"'
     },
+    sources: [
+      {name: "kafka", file: "results/kafka.json"},
+      {name: "rabbitmq", file: "results/rabbitmq.json"}
+    ],
     results: [.[].results[]]
   }' "$RESULTS_DIR/kafka.json" "$RESULTS_DIR/rabbitmq.json" \
     > "$RESULTS_DIR/summary.json"

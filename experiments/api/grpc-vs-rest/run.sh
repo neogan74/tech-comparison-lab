@@ -23,6 +23,12 @@ GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[run]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[warn]${NC} $*"; }
 
+check_deps() {
+  for cmd in curl jq; do
+    command -v "$cmd" >/dev/null 2>&1 || { echo "ERROR: '$cmd' not found" >&2; exit 1; }
+  done
+}
+
 usage() {
   cat <<'EOF'
 Usage: ./run.sh [--smoke-only]
@@ -50,6 +56,8 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+check_deps
 
 if [[ "$SKIP_BUILD" != "1" ]]; then
   info "Building bench-api server..."
@@ -125,7 +133,7 @@ info "gRPC benchmark..."
   --out "$RESULTS_DIR/grpc.json"
 
 # ── side-by-side summary ──────────────────────────────────────────────────────
-if command -v jq &>/dev/null && [[ -f "$RESULTS_DIR/rest.json" && -f "$RESULTS_DIR/grpc.json" ]]; then
+if [[ -f "$RESULTS_DIR/rest.json" && -f "$RESULTS_DIR/grpc.json" ]]; then
   echo ""
   echo "════════════════════════════════════════════════════════════════════════"
   echo " gRPC vs REST — side-by-side (RPS, p50/p99 ms)"
@@ -147,12 +155,30 @@ if command -v jq &>/dev/null && [[ -f "$RESULTS_DIR/rest.json" && -f "$RESULTS_D
 fi
 
 # ── save combined summary ─────────────────────────────────────────────────────
-if command -v jq &>/dev/null; then
-  jq -s '{rest: .[0], grpc: .[1]}' \
-    "$RESULTS_DIR/rest.json" "$RESULTS_DIR/grpc.json" \
-    > "$RESULTS_DIR/summary.json"
-  [[ -s "$RESULTS_DIR/summary.json" ]] || { echo "ERROR: summary.json missing" >&2; exit 1; }
-  info "Summary saved to $RESULTS_DIR/summary.json"
-fi
+jq -s '{
+  schema_version: "results-summary/v1",
+  experiment: {
+    id: "grpc-vs-rest",
+    name: "gRPC vs REST",
+    category: "api",
+    path: "experiments/api/grpc-vs-rest"
+  },
+  run_id: .[0].run_id,
+  timestamp: .[0].timestamp,
+  mode: "full",
+  config: {
+    count: '"$COUNT"',
+    workers: '"$WORKERS"'
+  },
+  sources: [
+    {name: "rest", file: "results/rest.json"},
+    {name: "grpc", file: "results/grpc.json"}
+  ],
+  results: [.[].results[]]
+}' \
+  "$RESULTS_DIR/rest.json" "$RESULTS_DIR/grpc.json" \
+  > "$RESULTS_DIR/summary.json"
+[[ -s "$RESULTS_DIR/summary.json" ]] || { echo "ERROR: summary.json missing" >&2; exit 1; }
+info "Summary saved to $RESULTS_DIR/summary.json"
 
 info "Done."
