@@ -8,9 +8,10 @@ import (
 
 func newRESTMux() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /echo", echoHandler)
-	mux.HandleFunc("GET /users/{id}", getUserHandler)
-	mux.HandleFunc("POST /orders", createOrderHandler)
+	mux.Handle("GET /metrics", metricsHandler())
+	mux.HandleFunc("GET /echo", instrumentREST("echo", echoHandler))
+	mux.HandleFunc("GET /users/{id}", instrumentREST("get-user", getUserHandler))
+	mux.HandleFunc("POST /orders", instrumentREST("create-order", createOrderHandler))
 	return mux
 }
 

@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 API_DIR="$REPO_ROOT/apps/bench-api"
 BENCH_DIR="$REPO_ROOT/benchmarks/loadgen-http"
-RESULTS_DIR="$(dirname "$0")/results"
+COMPOSE_DIR="$REPO_ROOT/deployments/docker-compose/api"
+RESULTS_DIR="$SCRIPT_DIR/results"
 
 API_BIN="$API_DIR/bench-api"
 BENCH_BIN="$BENCH_DIR/loadgen-http"
@@ -17,6 +19,8 @@ WORKERS=${WORKERS:-50}
 SMOKE_COUNT=${SMOKE_COUNT:-1000}
 SMOKE=${SMOKE_ONLY:-0}
 SKIP_BUILD=${SKIP_BUILD:-0}
+KEEP_STACK=${KEEP_STACK:-0}
+CLEAN=false
 
 # ── colours ───────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
@@ -24,14 +28,16 @@ info()  { echo -e "${GREEN}[run]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[warn]${NC} $*"; }
 
 check_deps() {
-  for cmd in curl jq; do
+  for cmd in curl jq docker; do
     command -v "$cmd" >/dev/null 2>&1 || { echo "ERROR: '$cmd' not found" >&2; exit 1; }
   done
+  docker compose version >/dev/null 2>&1 || { echo "ERROR: Docker Compose v2 is required" >&2; exit 1; }
+  docker info >/dev/null 2>&1 || { echo "ERROR: Docker daemon is not running" >&2; exit 1; }
 }
 
 usage() {
   cat <<'EOF'
-Usage: ./run.sh [--smoke-only]
+Usage: ./run.sh [--clean] [--smoke-only] [--keep-stack]
 
 Environment overrides:
   COUNT
@@ -39,13 +45,16 @@ Environment overrides:
   SMOKE_COUNT
   SMOKE_ONLY=1
   SKIP_BUILD=1
+  KEEP_STACK=1
 EOF
 }
 
 # ── build ─────────────────────────────────────────────────────────────────────
 for arg in "$@"; do
   case "$arg" in
+    --clean) CLEAN=true ;;
     --smoke-only) ;;
+    --keep-stack) KEEP_STACK=1 ;;
     -h|--help)
       usage
       exit 0
@@ -58,6 +67,26 @@ for arg in "$@"; do
 done
 
 check_deps
+
+cleanup_stack() {
+  if [[ "$KEEP_STACK" == "1" ]]; then
+    warn "KEEP_STACK=1 — API observability stack left running."
+    return
+  fi
+  info "Stopping Prometheus + Grafana stack..."
+  docker compose -f "$COMPOSE_DIR/docker-compose.yml" down --remove-orphans >/dev/null 2>&1 || true
+}
+
+start_stack() {
+  if [[ "$CLEAN" == true ]]; then
+    info "Removing existing API observability stack..."
+    docker compose -f "$COMPOSE_DIR/docker-compose.yml" down --remove-orphans >/dev/null 2>&1 || true
+  fi
+  info "Starting Prometheus + Grafana stack..."
+  docker compose -f "$COMPOSE_DIR/docker-compose.yml" up -d
+}
+
+start_stack
 
 if [[ "$SKIP_BUILD" != "1" ]]; then
   info "Building bench-api server..."
@@ -77,6 +106,7 @@ stop_server() {
     info "Stopping bench-api (pid $SERVER_PID)..."
     kill "$SERVER_PID" 2>/dev/null || true
   fi
+  cleanup_stack
 }
 trap stop_server EXIT
 
@@ -96,6 +126,18 @@ for i in $(seq 1 20); do
   fi
 done
 info "bench-api is up"
+
+for i in $(seq 1 20); do
+  if curl -sf "http://localhost:8080/metrics" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.5
+  if [[ $i -eq 20 ]]; then
+    echo "ERROR: bench-api metrics endpoint did not start in time" >&2
+    exit 1
+  fi
+done
+info "bench-api metrics endpoint is up"
 
 mkdir -p "$RESULTS_DIR"
 
@@ -181,4 +223,6 @@ jq -s '{
 [[ -s "$RESULTS_DIR/summary.json" ]] || { echo "ERROR: summary.json missing" >&2; exit 1; }
 info "Summary saved to $RESULTS_DIR/summary.json"
 
+info "Prometheus: http://localhost:9096"
+info "Grafana:    http://localhost:3004"
 info "Done."

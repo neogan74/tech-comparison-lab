@@ -60,6 +60,9 @@ jobs:
         with:
           go-version-file: benchmarks/loadgen-http/go.mod
 
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
       - name: Run validation script
         run: bash ./scripts/validate-grpc-vs-rest.sh
 
@@ -77,6 +80,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: benchmarks/loadgen-http/go.mod
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
 
       - name: Run smoke benchmark
         env:

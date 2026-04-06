@@ -21,6 +21,9 @@ bash -n "$REPO_ROOT/experiments/api/grpc-vs-rest/run.sh"
 log "Checking experiment runner help output"
 "$REPO_ROOT/experiments/api/grpc-vs-rest/run.sh" --help >/dev/null
 
+log "Checking Docker Compose config"
+docker compose -f "$REPO_ROOT/deployments/docker-compose/api/docker-compose.yml" config --quiet
+
 log "Running bench-api tests"
 (
   cd "$REPO_ROOT/apps/bench-api"
