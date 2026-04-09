@@ -24,6 +24,11 @@ func New(name, addr string) (*Bench, error) {
 		Addr:         addr,
 		PoolSize:     64,
 		MinIdleConns: 16,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		PoolTimeout:  60 * time.Second,
+		MaxRetries:   0,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -13,6 +13,22 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | Kafka vs RabbitMQ | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kubernetes vs OpenShift | smoke-tested (kind) | CI validates `loadgen-k8s`, `run.sh`, and runs kind-only smoke; OpenShift side remains manual |
 
+## Repository Commands
+
+Use the repo-level `Makefile` as the single local entrypoint:
+
+```bash
+make help
+make collect-results
+make validate-all
+make smoke-all
+make validate EXP=grpc-vs-rest
+make smoke EXP=postgresql-vs-mongodb
+```
+
+Merged experiment artifacts now follow [`results-summary/v1`](/Users/neogan/GitHub/tech-comparison-lab/docs/results-summary-v1.md).
+Repo-level aggregation follows [`results-index/v1`](/Users/neogan/GitHub/tech-comparison-lab/docs/results-index-v1.md) and is generated into `docs/index.json` by `make collect-results`.
+
 Here is the list of technologies to compare:
 
 ## Databases

@@ -120,11 +120,12 @@ wait_for_kafka() {
 
 wait_for_rabbitmq() {
   log "Waiting for RabbitMQ (port 5672)..."
-  local max=24 i=0
+  local max=60 i=0
   until docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T rabbitmq \
-      rabbitmq-diagnostics check_port_connectivity &>/dev/null; do
+      rabbitmq-diagnostics -q ping &>/dev/null && \
+      "$BINARY" --db rabbitmq --dry-run --addr "$RABBIT_ADDR" &>/dev/null; do
     i=$((i+1))
-    [ $i -ge $max ] && { echo "error: RabbitMQ not ready after 120s" >&2; exit 1; }
+    [ $i -ge $max ] && { echo "error: RabbitMQ not ready after 300s" >&2; exit 1; }
     sleep 5
   done
   log "RabbitMQ ready."
@@ -172,14 +173,26 @@ run_full() {
 merge_results() {
   log "Merging results..."
   jq -s '{
+    schema_version: "results-summary/v1",
+    experiment: {
+      id: "kafka-vs-rabbitmq",
+      name: "Kafka vs RabbitMQ",
+      category: "messaging",
+      path: "experiments/messaging/kafka-vs-rabbitmq"
+    },
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
+    mode: "full",
     config: {
       msg_count: '"$MSG_COUNT"',
       batch_size: '"$BATCH_SIZE"',
       consumers: '"$CONSUMERS"',
       partitions: '"$PARTITIONS"'
     },
+    sources: [
+      {name: "kafka", file: "results/kafka.json"},
+      {name: "rabbitmq", file: "results/rabbitmq.json"}
+    ],
     results: [.[].results[]]
   }' "$RESULTS_DIR/kafka.json" "$RESULTS_DIR/rabbitmq.json" \
     > "$RESULTS_DIR/summary.json"

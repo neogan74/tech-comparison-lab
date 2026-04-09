@@ -205,8 +205,16 @@ run_full() {
 merge_results() {
   log "Merging results..."
   jq -s '{
+    schema_version: "results-summary/v1",
+    experiment: {
+      id: "postgresql-vs-mongodb",
+      name: "PostgreSQL vs MongoDB",
+      category: "databases",
+      path: "experiments/databases/postgresql-vs-mongodb"
+    },
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
+    mode: "full",
     config: {
       insert_count: '"$INSERT_COUNT"',
       query_iterations: '"$QUERY_ITERATIONS"',
@@ -215,6 +223,10 @@ merge_results() {
       workers: '"$WORKERS"',
       batch_size: '"$BATCH_SIZE"'
     },
+    sources: [
+      {name: "postgres", file: "results/postgres.json"},
+      {name: "mongo", file: "results/mongo.json"}
+    ],
     results: [.[].results[]]
   }' "$RESULTS_DIR/postgres.json" "$RESULTS_DIR/mongo.json" \
     > "$RESULTS_DIR/summary.json"

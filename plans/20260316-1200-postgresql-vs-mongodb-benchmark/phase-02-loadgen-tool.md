@@ -2,7 +2,7 @@
 
 **Parent plan:** [plan.md](./plan.md)
 **Dependencies:** Phase 01 (running stack for local testing)
-**Status:** pending
+**Status:** completed
 **Priority:** high
 **Date:** 2026-03-16
 
@@ -235,15 +235,15 @@ UUIDs: `crypto/rand` + `fmt.Sprintf("%08x-%04x-...")` — avoids external dep.
 
 ## Todo
 
-- [ ] Write `go.mod` with correct module path and dependencies
-- [ ] Write `internal/report/report.go` (structs + percentile + output)
-- [ ] Write `internal/postgres/bench.go` (all 5 methods)
-- [ ] Write `internal/mongo/bench.go` (all 6 methods)
-- [ ] Write `main.go` (flag parsing + dispatch)
-- [ ] Write `internal/report/report_test.go` (percentile unit test)
-- [ ] Verify `go build ./...` succeeds
-- [ ] Verify `go vet ./...` passes
-- [ ] Smoke test against phase 01 stack: `--op insert --count 1000 --db postgres`
+- [x] Write `go.mod` with correct module path and dependencies
+- [x] Write `internal/report/report.go` (structs + percentile + output)
+- [x] Write `internal/postgres/bench.go` (all 5 methods)
+- [x] Write `internal/mongo/bench.go` (all 6 methods)
+- [x] Write `main.go` (flag parsing + dispatch)
+- [x] Write `internal/report/report_test.go` (percentile unit test)
+- [x] Verify `go build ./...` succeeds
+- [x] Verify `go vet ./...` passes
+- [x] Smoke test against phase 01 stack: `--op insert --count 1000 --db postgres`
 
 ---
 

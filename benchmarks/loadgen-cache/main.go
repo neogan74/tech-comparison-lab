@@ -153,13 +153,12 @@ func run(ctx context.Context, bench *client.Bench, db string, cfg runConfig) []r
 
 	if runPipeSet {
 		totalCmds := cfg.count
-		batches := totalCmds / cfg.pipeSize
 		fmt.Printf("%s: pipeline-set %d keys (pipe=%d workers=%d)...\n", db, totalCmds, cfg.pipeSize, cfg.workers)
 		durs, total, err := bench.PipelineSet(ctx, totalCmds, cfg.pipeSize, cfg.workers)
 		if err != nil {
 			log.Fatalf("%s pipeline-set: %v", db, err)
 		}
-		r := report.Compute(db, "pipeline-set", batches, cfg.workers, durs, total)
+		r := report.Compute(db, "pipeline-set", totalCmds, cfg.workers, durs, total)
 		r.MemoryUsed, _ = bench.MemoryUsed(ctx)
 		r.KeyCount, _ = bench.KeyCount(ctx)
 		results = append(results, r)

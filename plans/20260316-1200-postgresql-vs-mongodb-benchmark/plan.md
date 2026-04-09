@@ -1,7 +1,7 @@
 # Plan: PostgreSQL vs MongoDB JSON Workload Benchmark
 
 **Date:** 2026-03-16
-**Status:** pending
+**Status:** completed
 **Priority:** high
 **Experiment:** experiments.md §1 — JSON workload
 
@@ -30,9 +30,9 @@ entry point. Results emitted as stdout table + `results/summary.json`.
 
 | # | File | Description | Status |
 |---|------|-------------|--------|
-| 1 | [phase-01-infrastructure.md](./phase-01-infrastructure.md) | Docker Compose stack (PG16 + Mongo7 + Prometheus + Grafana) | pending |
-| 2 | [phase-02-loadgen-tool.md](./phase-02-loadgen-tool.md) | Go CLI benchmark tool (`loadgen-db`) | pending |
-| 3 | [phase-03-experiment-runner.md](./phase-03-experiment-runner.md) | `run.sh` orchestrator + experiment README | pending |
+| 1 | [phase-01-infrastructure.md](./phase-01-infrastructure.md) | Docker Compose stack (PG16 + Mongo7 + Prometheus + Grafana) | completed |
+| 2 | [phase-02-loadgen-tool.md](./phase-02-loadgen-tool.md) | Go CLI benchmark tool (`loadgen-db`) | completed |
+| 3 | [phase-03-experiment-runner.md](./phase-03-experiment-runner.md) | `run.sh` orchestrator + experiment README | completed |
 
 ## Deliverables
 

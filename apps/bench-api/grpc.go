@@ -20,9 +20,9 @@ func init() {
 // jsonCodec implements encoding.Codec using JSON.
 type jsonCodec struct{}
 
-func (jsonCodec) Marshal(v any) ([]byte, error)        { return json.Marshal(v) }
-func (jsonCodec) Unmarshal(data []byte, v any) error   { return json.Unmarshal(data, v) }
-func (jsonCodec) Name() string                          { return "proto" } // replaces default proto codec
+func (jsonCodec) Marshal(v any) ([]byte, error)      { return json.Marshal(v) }
+func (jsonCodec) Unmarshal(data []byte, v any) error { return json.Unmarshal(data, v) }
+func (jsonCodec) Name() string                       { return "proto" } // replaces default proto codec
 
 // BenchServiceServer is the interface gRPC uses to validate the implementation.
 // HandlerType in grpc.ServiceDesc must be a pointer to an interface.
@@ -62,7 +62,17 @@ var grpcServiceDesc = grpc.ServiceDesc{
 				if err := dec(req); err != nil {
 					return nil, err
 				}
-				return srv.(BenchServiceServer).echo(ctx, req)
+				if interceptor == nil {
+					return srv.(BenchServiceServer).echo(ctx, req)
+				}
+				info := &grpc.UnaryServerInfo{
+					Server:     srv,
+					FullMethod: "/bench.BenchService/Echo",
+				}
+				handler := func(ctx context.Context, req any) (any, error) {
+					return srv.(BenchServiceServer).echo(ctx, req.(*EchoReq))
+				}
+				return interceptor(ctx, req, info, handler)
 			},
 		},
 		{
@@ -72,7 +82,17 @@ var grpcServiceDesc = grpc.ServiceDesc{
 				if err := dec(req); err != nil {
 					return nil, err
 				}
-				return srv.(BenchServiceServer).getUser(ctx, req)
+				if interceptor == nil {
+					return srv.(BenchServiceServer).getUser(ctx, req)
+				}
+				info := &grpc.UnaryServerInfo{
+					Server:     srv,
+					FullMethod: "/bench.BenchService/GetUser",
+				}
+				handler := func(ctx context.Context, req any) (any, error) {
+					return srv.(BenchServiceServer).getUser(ctx, req.(*UserReq))
+				}
+				return interceptor(ctx, req, info, handler)
 			},
 		},
 		{
@@ -82,7 +102,17 @@ var grpcServiceDesc = grpc.ServiceDesc{
 				if err := dec(req); err != nil {
 					return nil, err
 				}
-				return srv.(BenchServiceServer).createOrder(ctx, req)
+				if interceptor == nil {
+					return srv.(BenchServiceServer).createOrder(ctx, req)
+				}
+				info := &grpc.UnaryServerInfo{
+					Server:     srv,
+					FullMethod: "/bench.BenchService/CreateOrder",
+				}
+				handler := func(ctx context.Context, req any) (any, error) {
+					return srv.(BenchServiceServer).createOrder(ctx, req.(*OrderReq))
+				}
+				return interceptor(ctx, req, info, handler)
 			},
 		},
 	},
@@ -94,7 +124,7 @@ func startGRPCServer(addr string) error {
 	if err != nil {
 		return err
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(grpcMetricsInterceptor()))
 	s.RegisterService(&grpcServiceDesc, &benchServer{})
 	return s.Serve(lis)
 }

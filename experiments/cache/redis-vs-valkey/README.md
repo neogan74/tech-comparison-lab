@@ -89,6 +89,12 @@ exists, `run.sh` falls back to that binary.
 | prometheus | 9091 | Metrics (note: 9091 to avoid conflict with exp #1) |
 | grafana | 3001 | Dashboards (note: 3001 to avoid conflict with exp #1) |
 
+Grafana auto-provisions three dashboards under the `Tech Comparison Lab` folder:
+
+- `Redis vs Valkey Overview`
+- `Redis Standard`
+- `Valkey Standard`
+
 ## Interpreting Results
 
 - **QPS** is the primary metric for cache workloads

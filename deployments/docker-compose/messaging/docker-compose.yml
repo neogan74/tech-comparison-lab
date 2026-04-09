@@ -36,11 +36,23 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
       timeout: 10s
-      retries: 15
+      retries: 30
       start_period: 20s
+
+  rabbitmq-exporter:
+    image: kbudde/rabbitmq-exporter:latest
+    environment:
+      RABBIT_URL: http://rabbitmq:15672
+      RABBIT_USER: bench
+      RABBIT_PASSWORD: benchpass
+      PUBLISH_PORT: 9419
+      OUTPUT_FORMAT: TTY
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   kafka-exporter:
     image: danielqsj/kafka-exporter:latest
@@ -59,6 +71,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
       - kafka-exporter
+      - rabbitmq-exporter
 
   grafana:
     image: grafana/grafana:latest

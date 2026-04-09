@@ -123,6 +123,9 @@ The stack runs via Docker Compose (`deployments/docker-compose/`):
 | postgres-exporter | internal | PG metrics for Prometheus |
 | mongodb-exporter | internal | Mongo metrics for Prometheus |
 
+Grafana now auto-provisions the dashboard `PostgreSQL vs MongoDB Overview`
+under the `Tech Comparison Lab` folder.
+
 ## Troubleshooting
 
 **`docker compose` not found**

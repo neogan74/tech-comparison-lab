@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -44,7 +45,7 @@ func (b *Bench) CreateTopic(ctx context.Context, partitions int) error {
 			return fmt.Errorf("CreateTopics: %w", err)
 		}
 	}
-	return nil
+	return b.waitTopicReady(ctx, partitions)
 }
 
 // DeleteTopic removes the topic. Ignores "unknown topic" errors.
@@ -61,17 +62,62 @@ func makeMsg(id int64) []byte {
 	return []byte(fmt.Sprintf(`{"id":%d,"ts":%d,"p":"%s"}`, id, time.Now().UnixNano(), payload))
 }
 
-// Produce sends count messages in batches of batchSize.
-// Returns per-batch durations and total elapsed time.
-func (b *Bench) Produce(ctx context.Context, count, batchSize int) ([]time.Duration, time.Duration, error) {
-	w := &kafka.Writer{
-		Addr:         kafka.TCP(b.brokers...),
-		Topic:        b.topic,
+func (b *Bench) waitTopicReady(ctx context.Context, partitions int) error {
+	deadline := time.Now().Add(30 * time.Second)
+	for {
+		conn, err := kafka.DialContext(ctx, "tcp", b.brokers[0])
+		if err == nil {
+			parts, readErr := conn.ReadPartitions()
+			_ = conn.Close()
+			if readErr == nil {
+				ready := 0
+				for _, p := range parts {
+					if p.Topic == b.topic && p.Leader.Host != "" && p.Leader.Port != 0 {
+						ready++
+					}
+				}
+				if ready >= partitions {
+					return nil
+				}
+			}
+		}
+
+		if time.Now().After(deadline) {
+			return fmt.Errorf("topic %q did not become ready within 30s", b.topic)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(1 * time.Second):
+		}
+	}
+}
+
+func newWriter(brokers []string, topic string, batchSize int) *kafka.Writer {
+	return &kafka.Writer{
+		Addr:         kafka.TCP(brokers...),
+		Topic:        topic,
 		Balancer:     &kafka.RoundRobin{},
 		BatchSize:    batchSize,
 		BatchTimeout: 5 * time.Millisecond,
 		RequiredAcks: kafka.RequireOne,
 	}
+}
+
+func isTransientTopicError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Unknown Topic Or Partition") ||
+		strings.Contains(msg, "Leader Not Available") ||
+		strings.Contains(msg, "Not Leader For Partition")
+}
+
+// Produce sends count messages in batches of batchSize.
+// Returns per-batch durations and total elapsed time.
+func (b *Bench) Produce(ctx context.Context, count, batchSize int) ([]time.Duration, time.Duration, error) {
+	w := newWriter(b.brokers, b.topic, batchSize)
 	defer w.Close()
 
 	durs := make([]time.Duration, 0, count/batchSize+1)
@@ -90,7 +136,24 @@ func (b *Bench) Produce(ctx context.Context, count, batchSize int) ([]time.Durat
 			msgID++
 		}
 		t := time.Now()
-		if err := w.WriteMessages(ctx, msgs...); err != nil {
+		var err error
+		for attempt := 0; attempt < 10; attempt++ {
+			err = w.WriteMessages(ctx, msgs...)
+			if err == nil {
+				break
+			}
+			if !isTransientTopicError(err) {
+				return durs, time.Since(start), fmt.Errorf("WriteMessages: %w", err)
+			}
+			_ = w.Close()
+			select {
+			case <-ctx.Done():
+				return durs, time.Since(start), ctx.Err()
+			case <-time.After(1 * time.Second):
+			}
+			w = newWriter(b.brokers, b.topic, batchSize)
+		}
+		if err != nil {
 			return durs, time.Since(start), fmt.Errorf("WriteMessages: %w", err)
 		}
 		durs = append(durs, time.Since(t))

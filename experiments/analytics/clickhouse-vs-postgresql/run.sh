@@ -175,14 +175,26 @@ run_full() {
 merge_results() {
   log "Merging results..."
   jq -s '{
+    schema_version: "results-summary/v1",
+    experiment: {
+      id: "clickhouse-vs-postgresql",
+      name: "ClickHouse vs PostgreSQL",
+      category: "analytics",
+      path: "experiments/analytics/clickhouse-vs-postgresql"
+    },
     run_id: .[0].run_id,
     timestamp: .[0].timestamp,
+    mode: "full",
     config: {
       row_count: '"$ROW_COUNT"',
       batch_size: '"$BATCH_SIZE"',
       workers: '"$WORKERS"',
       query_iter: '"$QUERY_ITER"'
     },
+    sources: [
+      {name: "clickhouse", file: "results/clickhouse.json"},
+      {name: "postgres", file: "results/postgres.json"}
+    ],
     results: [.[].results[]]
   }' "$RESULTS_DIR/clickhouse.json" "$RESULTS_DIR/postgres.json" \
     > "$RESULTS_DIR/summary.json"

@@ -2,7 +2,7 @@
 
 **Parent plan:** [plan.md](./plan.md)
 **Dependencies:** Phase 01 (docker-compose), Phase 02 (loadgen-db binary)
-**Status:** pending
+**Status:** completed
 **Priority:** high
 **Date:** 2026-03-16
 
@@ -213,15 +213,15 @@ benchmarks/loadgen-db/bin/
 
 ## Todo
 
-- [ ] Create directory structure with `.gitkeep`
-- [ ] Write `run.sh` with all helper functions
-- [ ] `chmod +x run.sh`
-- [ ] Write `README.md` with all required sections
-- [ ] Add `.gitignore` entries for results and binary
-- [ ] Validate with `bash -n run.sh`
-- [ ] Test `wait_for_*` functions against running stack
-- [ ] Test `smoke_test()` catches a failure (kill postgres mid-smoke)
-- [ ] Verify `print_table()` output aligns correctly for various value widths
+- [x] Create directory structure with `.gitkeep`
+- [x] Write `run.sh` with all helper functions
+- [x] `chmod +x run.sh`
+- [x] Write `README.md` with all required sections
+- [x] Add `.gitignore` entries for results and binary
+- [x] Validate with `bash -n run.sh`
+- [x] Test `wait_for_*` functions against running stack
+- [x] Test `smoke_test()` catches a failure (kill postgres mid-smoke)
+- [x] Verify `print_table()` output aligns correctly for various value widths
 
 ---
 
