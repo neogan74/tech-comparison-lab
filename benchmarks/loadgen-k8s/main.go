@@ -31,6 +31,11 @@ func main() {
 	)
 	flag.Parse()
 
+	if err := validateConfig(*namespace, *op, *count, *rounds, *maxReplicas); err != nil {
+		fmt.Fprintf(os.Stderr, "config: %v\n", err)
+		os.Exit(1)
+	}
+
 	cfg, err := client.BuildConfig(*kubeconfig, *kctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "kubeconfig: %v\n", err)
@@ -47,82 +52,116 @@ func main() {
 	fmt.Printf("cluster type : %s\n", clusterType)
 
 	var results []report.Result
-
-	runLatency := func() {
+	runLatency := func() error {
 		fmt.Println("→ api-latency...")
 		r, err := bench.RunAPILatency(ctx, cs, *count)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "api-latency: %v\n", err)
-			return
+			return fmt.Errorf("api-latency: %w", err)
 		}
 		results = append(results, r...)
+		return nil
 	}
 
-	runOverhead := func() {
+	runOverhead := func() error {
 		fmt.Println("→ overhead...")
 		r, err := bench.RunOverhead(ctx, cs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "overhead: %v\n", err)
-			return
+			return fmt.Errorf("overhead: %w", err)
 		}
 		results = append(results, r...)
+		return nil
 	}
 
-	withNamespace := func(fn func()) {
+	withNamespace := func(fn func() error) error {
 		if err := ensureNamespace(ctx, cs, *namespace); err != nil {
-			fmt.Fprintf(os.Stderr, "namespace: %v\n", err)
-			return
+			return fmt.Errorf("namespace: %w", err)
 		}
-		fn()
+		err := fn()
 		if !*noCleanup {
 			_ = cs.CoreV1().Namespaces().Delete(ctx, *namespace, metav1.DeleteOptions{})
 		}
+		return err
 	}
 
-	runDeployInNS := func() {
+	runDeployInNS := func() error {
 		fmt.Printf("→ deploy (%d rounds)...\n", *rounds)
 		r, err := bench.RunDeploy(ctx, cs, *namespace, *rounds)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "deploy: %v\n", err)
-			return
+			return fmt.Errorf("deploy: %w", err)
 		}
 		results = append(results, r...)
+		return nil
 	}
 
-	runScaleInNS := func() {
+	runScaleInNS := func() error {
 		fmt.Printf("→ scale (max=%d, %d rounds)...\n", *maxReplicas, *rounds)
 		r, err := bench.RunScale(ctx, cs, *namespace, *rounds, int32(*maxReplicas))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "scale: %v\n", err)
-			return
+			return fmt.Errorf("scale: %w", err)
 		}
 		results = append(results, r...)
+		return nil
 	}
 
 	switch *op {
 	case "all":
 		// Share one namespace for deploy + scale to avoid termination race.
-		runLatency()
-		runOverhead()
+		if err := runLatency(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		if err := runOverhead(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 		if err := ensureNamespace(ctx, cs, *namespace); err != nil {
 			fmt.Fprintf(os.Stderr, "namespace: %v\n", err)
 			os.Exit(1)
 		}
-		runDeployInNS()
-		runScaleInNS()
+		if err := runDeployInNS(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			if !*noCleanup {
+				_ = cs.CoreV1().Namespaces().Delete(ctx, *namespace, metav1.DeleteOptions{})
+			}
+			os.Exit(1)
+		}
+		if err := runScaleInNS(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			if !*noCleanup {
+				_ = cs.CoreV1().Namespaces().Delete(ctx, *namespace, metav1.DeleteOptions{})
+			}
+			os.Exit(1)
+		}
 		if !*noCleanup {
 			_ = cs.CoreV1().Namespaces().Delete(ctx, *namespace, metav1.DeleteOptions{})
 		}
 	case "api-latency":
-		runLatency()
+		if err := runLatency(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	case "overhead":
-		runOverhead()
+		if err := runOverhead(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	case "deploy":
-		withNamespace(runDeployInNS)
+		if err := withNamespace(runDeployInNS); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	case "scale":
-		withNamespace(runScaleInNS)
+		if err := withNamespace(runScaleInNS); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown op: %s (valid: all|api-latency|deploy|scale|overhead)\n", *op)
+		os.Exit(1)
+	}
+
+	if len(results) == 0 {
+		fmt.Fprintln(os.Stderr, "no benchmark results produced")
 		os.Exit(1)
 	}
 
@@ -155,4 +194,30 @@ func ensureNamespace(ctx context.Context, cs *kubernetes.Clientset, name string)
 	}
 	_, err = cs.CoreV1().Namespaces().Create(ctx, ns, metav1.CreateOptions{})
 	return err
+}
+
+func validateConfig(namespace, op string, count, rounds, maxReplicas int) error {
+	if namespace == "" {
+		return fmt.Errorf("--namespace must not be empty")
+	}
+	validOps := map[string]bool{
+		"all":         true,
+		"api-latency": true,
+		"deploy":      true,
+		"scale":       true,
+		"overhead":    true,
+	}
+	if !validOps[op] {
+		return fmt.Errorf("unknown --op %q, want all|api-latency|deploy|scale|overhead", op)
+	}
+	if count < 1 {
+		return fmt.Errorf("--count must be >= 1")
+	}
+	if rounds < 1 {
+		return fmt.Errorf("--rounds must be >= 1")
+	}
+	if maxReplicas < 1 {
+		return fmt.Errorf("--replicas must be >= 1")
+	}
+	return nil
 }

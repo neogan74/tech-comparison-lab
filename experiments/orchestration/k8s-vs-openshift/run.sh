@@ -1,55 +1,143 @@
 #!/usr/bin/env bash
 # Experiment: Kubernetes vs OpenShift
-# Compares API latency, deploy/scale speed, and control-plane overhead.
+# Usage: ./run.sh [--clean] [--smoke-only] [--keep-cluster]
 #
-# Requirements:
-#   - kind       (https://kind.sigs.k8s.io)
-#   - kubectl
-#   - go >= 1.22
-#   - jq         (for side-by-side table, optional)
-#
-# For OpenShift comparison (optional):
-#   - OpenShift Local (CRC) running, OR any OCP cluster reachable via kubeconfig
-#   - Set OCP_CONTEXT to the kubeconfig context name, e.g.:
-#       OCP_CONTEXT=crc-admin ./run.sh
-#
-# Tuning:
-#   COUNT=200      API latency iterations (default: 1000)
-#   ROUNDS=3       Deploy/scale rounds   (default: 3)
-#   REPLICAS=20    Max replicas          (default: 20)
+# Environment overrides:
+#   COUNT           (default: 1000)
+#   ROUNDS          (default: 3)
+#   REPLICAS        (default: 20)
+#   OCP_CONTEXT     (optional OpenShift kubeconfig context)
+#   SMOKE_COUNT     (default: 200)
+#   SMOKE_ROUNDS    (default: 1)
+#   SMOKE_REPLICAS  (default: 5)
+#   SKIP_BUILD=true
+
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+REPO_ROOT=$(cd "$SCRIPT_DIR/../../.." && pwd)
 BENCH_DIR="$REPO_ROOT/benchmarks/loadgen-k8s"
-RESULTS_DIR="$(dirname "$0")/results"
-BENCH_BIN="$BENCH_DIR/loadgen-k8s"
+RESULTS_DIR="$SCRIPT_DIR/results"
+BENCH_BIN="$BENCH_DIR/bin/loadgen-k8s"
 
-K8S_CLUSTER="bench-k8s"
+K8S_CLUSTER="${K8S_CLUSTER:-bench-k8s}"
 K8S_CONTEXT="kind-${K8S_CLUSTER}"
 OCP_CONTEXT="${OCP_CONTEXT:-}"
 
 COUNT="${COUNT:-1000}"
 ROUNDS="${ROUNDS:-3}"
 REPLICAS="${REPLICAS:-20}"
-SMOKE="${SMOKE_ONLY:-0}"
+SMOKE_COUNT="${SMOKE_COUNT:-200}"
+SMOKE_ROUNDS="${SMOKE_ROUNDS:-1}"
+SMOKE_REPLICAS="${SMOKE_REPLICAS:-5}"
+SKIP_BUILD="${SKIP_BUILD:-false}"
+
+CLEAN=false
+SMOKE_ONLY=false
+KEEP_CLUSTER="${KEEP_CLUSTER:-0}"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[run]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[warn]${NC} $*"; }
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-# ── prerequisites ─────────────────────────────────────────────────────────────
-for cmd in kind kubectl go; do
-  if ! command -v "$cmd" &>/dev/null; then
-    echo "ERROR: $cmd not found. Please install it." >&2; exit 1
-  fi
+for arg in "$@"; do
+  case "$arg" in
+    --clean) CLEAN=true ;;
+    --smoke-only) SMOKE_ONLY=true ;;
+    --keep-cluster) KEEP_CLUSTER=1 ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: ./run.sh [--clean] [--smoke-only] [--keep-cluster]
+
+Options:
+  --clean         delete the existing kind cluster before the run
+  --smoke-only    run a smaller kind benchmark
+  --keep-cluster  leave the kind cluster running after the run
+
+Environment overrides:
+  COUNT
+  ROUNDS
+  REPLICAS
+  OCP_CONTEXT
+  SMOKE_COUNT
+  SMOKE_ROUNDS
+  SMOKE_REPLICAS
+  SKIP_BUILD=true
+EOF
+      exit 0
+      ;;
+    *)
+      echo "error: unknown argument '$arg'" >&2
+      exit 1
+      ;;
+  esac
 done
 
-# ── build ─────────────────────────────────────────────────────────────────────
-info "Building loadgen-k8s..."
-(cd "$BENCH_DIR" && go mod tidy && go build -o loadgen-k8s .)
+check_deps() {
+  for cmd in kind kubectl; do
+    if ! have_cmd "$cmd"; then
+      echo "error: '$cmd' not found." >&2
+      exit 1
+    fi
+  done
+  if ! docker info >/dev/null 2>&1; then
+    echo "error: Docker not running." >&2
+    exit 1
+  fi
+}
 
-# ── kind cluster ──────────────────────────────────────────────────────────────
-if ! kind get clusters 2>/dev/null | grep -q "^${K8S_CLUSTER}$"; then
+build_binary() {
+  if [ "$SKIP_BUILD" = true ]; then
+    if [ ! -x "$BENCH_BIN" ]; then
+      echo "error: SKIP_BUILD=true but binary is missing: $BENCH_BIN" >&2
+      exit 1
+    fi
+    info "Using existing binary: $BENCH_BIN"
+    return
+  fi
+
+  if have_cmd go; then
+    info "Building loadgen-k8s..."
+    mkdir -p "$BENCH_DIR/bin"
+    (cd "$BENCH_DIR" && go build -o "$BENCH_BIN" .)
+    info "Binary: $BENCH_BIN"
+    return
+  fi
+
+  if [ -x "$BENCH_BIN" ]; then
+    info "Go not found; using existing binary: $BENCH_BIN"
+    return
+  fi
+
+  echo "error: 'go' not found and no prebuilt binary is available at $BENCH_BIN" >&2
+  exit 1
+}
+
+cleanup_kind() {
+  if [ "$KEEP_CLUSTER" = "1" ]; then
+    warn "KEEP_CLUSTER=1 — cluster '${K8S_CLUSTER}' left running."
+    return
+  fi
+  info "Deleting kind cluster '${K8S_CLUSTER}'..."
+  kind delete cluster --name "$K8S_CLUSTER" >/dev/null 2>&1 || true
+}
+
+cleanup_on_exit() {
+  cleanup_kind
+}
+
+ensure_kind_cluster() {
+  if [ "$CLEAN" = true ]; then
+    info "Removing existing kind cluster '${K8S_CLUSTER}'..."
+    kind delete cluster --name "$K8S_CLUSTER" >/dev/null 2>&1 || true
+  fi
+
+  if kind get clusters 2>/dev/null | grep -q "^${K8S_CLUSTER}$"; then
+    info "Kind cluster '${K8S_CLUSTER}' already exists."
+    return
+  fi
+
   info "Creating kind cluster '${K8S_CLUSTER}'..."
   kind create cluster --name "$K8S_CLUSTER" --config - <<'EOF'
 kind: Cluster
@@ -58,39 +146,127 @@ nodes:
   - role: control-plane
   - role: worker
 EOF
-else
-  info "Kind cluster '${K8S_CLUSTER}' already exists."
-fi
+}
 
-mkdir -p "$RESULTS_DIR"
-
-# ── helper: run benchmark against a context ───────────────────────────────────
 run_bench() {
   local label="$1" ctx="$2" out="$3"
-  local extra_args=""
-  if [[ "$SMOKE" == "1" ]]; then
-    extra_args="--count=200 --rounds=1 --replicas=5"
-  else
-    extra_args="--count=${COUNT} --rounds=${ROUNDS} --replicas=${REPLICAS}"
-  fi
+  local bench_count bench_rounds bench_replicas
+  bench_count=$(selected_count)
+  bench_rounds=$(selected_rounds)
+  bench_replicas=$(selected_replicas)
+
   info "Benchmarking ${label} (context: ${ctx})..."
   "$BENCH_BIN" \
     --context "$ctx" \
     --op all \
-    $extra_args \
+    --count "$bench_count" \
+    --rounds "$bench_rounds" \
+    --replicas "$bench_replicas" \
     --out "$out"
 }
 
-# ── k8s benchmark ─────────────────────────────────────────────────────────────
+selected_count() {
+  if [ "$SMOKE_ONLY" = true ]; then
+    echo "$SMOKE_COUNT"
+  else
+    echo "$COUNT"
+  fi
+}
+
+selected_rounds() {
+  if [ "$SMOKE_ONLY" = true ]; then
+    echo "$SMOKE_ROUNDS"
+  else
+    echo "$ROUNDS"
+  fi
+}
+
+selected_replicas() {
+  if [ "$SMOKE_ONLY" = true ]; then
+    echo "$SMOKE_REPLICAS"
+  else
+    echo "$REPLICAS"
+  fi
+}
+
+render_summary() {
+  if [ ! -s "$RESULTS_DIR/k8s.json" ] || [ ! -s "$RESULTS_DIR/ocp.json" ]; then
+    return
+  fi
+
+  if ! have_cmd jq; then
+    warn "jq not found — skipping side-by-side summary generation."
+    return
+  fi
+
+  echo ""
+  echo "════════════════════════════════════════════════════════════════════════════════"
+  echo " Kubernetes vs OpenShift — side-by-side"
+  echo "════════════════════════════════════════════════════════════════════════════════"
+
+  local k8s_type ocp_type latency_ops scalar_ops op k8s_p50 ocp_p50 k8s_val ocp_val
+  k8s_type=$(jq -r '.cluster_type' "$RESULTS_DIR/k8s.json")
+  ocp_type=$(jq -r '.cluster_type' "$RESULTS_DIR/ocp.json")
+  printf "%-35s  %12s  %12s\n" "Operation" "$k8s_type" "$ocp_type"
+  printf "%-35s  %12s  %12s\n" "───────────────────────────────────" "────────────" "────────────"
+
+  latency_ops=$(jq -r '.results[] | select(.p50_ms > 0) | .op' "$RESULTS_DIR/k8s.json" | sort -u)
+  for op in $latency_ops; do
+    k8s_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/k8s.json" | head -1 | xargs printf "%.2f ms")
+    ocp_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/ocp.json" | head -1 | xargs printf "%.2f ms")
+    printf "%-35s  %12s  %12s\n" "$op (p50)" "$k8s_p50" "$ocp_p50"
+  done
+
+  scalar_ops=$(jq -r '.results[] | select(.p50_ms == null or .p50_ms == 0) | .op' "$RESULTS_DIR/k8s.json" | sort -u)
+  for op in $scalar_ops; do
+    k8s_val=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/k8s.json" | head -1)
+    ocp_val=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/ocp.json" | head -1)
+    printf "%-35s  %12s  %12s\n" "$op" "$k8s_val" "$ocp_val"
+  done
+  echo "════════════════════════════════════════════════════════════════════════════════"
+
+  jq -s '{
+    config: {
+      count: '"$(selected_count)"',
+      rounds: '"$(selected_rounds)"',
+      replicas: '"$(selected_replicas)"'
+    },
+    k8s: .[0],
+    ocp: .[1]
+  }' "$RESULTS_DIR/k8s.json" "$RESULTS_DIR/ocp.json" > "$RESULTS_DIR/summary.json"
+  info "Summary saved to $RESULTS_DIR/summary.json"
+}
+
+verify_results() {
+  if [ ! -s "$RESULTS_DIR/k8s.json" ]; then
+    echo "error: expected results file is missing or empty: $RESULTS_DIR/k8s.json" >&2
+    exit 1
+  fi
+
+  if [ -n "$OCP_CONTEXT" ] && [ ! -s "$RESULTS_DIR/ocp.json" ]; then
+    echo "error: expected results file is missing or empty: $RESULTS_DIR/ocp.json" >&2
+    exit 1
+  fi
+
+  if [ -n "$OCP_CONTEXT" ] && have_cmd jq && [ ! -s "$RESULTS_DIR/summary.json" ]; then
+    echo "error: expected summary file is missing or empty: $RESULTS_DIR/summary.json" >&2
+    exit 1
+  fi
+}
+
+check_deps
+build_binary
+trap cleanup_on_exit EXIT
+ensure_kind_cluster
+mkdir -p "$RESULTS_DIR"
+
 run_bench "Kubernetes (kind)" "$K8S_CONTEXT" "$RESULTS_DIR/k8s.json"
 
-# ── openshift benchmark (optional) ────────────────────────────────────────────
-if [[ -n "$OCP_CONTEXT" ]]; then
-  # Grant anyuid SCC if oc is available (needed for the bench namespace)
-  if command -v oc &>/dev/null; then
+if [ -n "$OCP_CONTEXT" ]; then
+  if have_cmd oc; then
     info "Granting anyuid SCC to bench namespace on OpenShift..."
     oc --context "$OCP_CONTEXT" adm policy add-scc-to-user anyuid \
-      system:serviceaccount:bench-k8s:default 2>/dev/null || true
+      system:serviceaccount:bench-k8s:default >/dev/null 2>&1 || true
   fi
   run_bench "OpenShift" "$OCP_CONTEXT" "$RESULTS_DIR/ocp.json"
 else
@@ -98,48 +274,11 @@ else
   warn "To compare: OCP_CONTEXT=crc-admin ./run.sh"
 fi
 
-# ── side-by-side table ────────────────────────────────────────────────────────
-if command -v jq &>/dev/null && [[ -f "$RESULTS_DIR/k8s.json" && -f "$RESULTS_DIR/ocp.json" ]]; then
-  echo ""
-  echo "════════════════════════════════════════════════════════════════════════════════"
-  echo " Kubernetes vs OpenShift — side-by-side"
-  echo "════════════════════════════════════════════════════════════════════════════════"
+render_summary
+verify_results
 
-  k8s_type=$(jq -r '.cluster_type' "$RESULTS_DIR/k8s.json")
-  ocp_type=$(jq -r '.cluster_type'  "$RESULTS_DIR/ocp.json")
-  printf "%-35s  %12s  %12s\n" "Operation" "$k8s_type" "$ocp_type"
-  printf "%-35s  %12s  %12s\n" "───────────────────────────────────" "────────────" "────────────"
-
-  # Latency ops: show p50_ms
-  latency_ops=$(jq -r '.results[] | select(.p50_ms > 0) | .op' "$RESULTS_DIR/k8s.json" 2>/dev/null | sort -u)
-  for op in $latency_ops; do
-    k8s_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/k8s.json" 2>/dev/null | head -1 | xargs printf "%.2f ms")
-    ocp_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/ocp.json"  2>/dev/null | head -1 | xargs printf "%.2f ms")
-    printf "%-35s  %12s  %12s\n" "$op (p50)" "$k8s_p50" "$ocp_p50"
-  done
-
-  # Scalar ops: show value + unit
-  scalar_ops=$(jq -r '.results[] | select(.p50_ms == null or .p50_ms == 0) | .op' "$RESULTS_DIR/k8s.json" 2>/dev/null | sort -u)
-  for op in $scalar_ops; do
-    k8s_val=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/k8s.json" 2>/dev/null | head -1)
-    ocp_val=$(jq -r  --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/ocp.json"  2>/dev/null | head -1)
-    printf "%-35s  %12s  %12s\n" "$op" "$k8s_val" "$ocp_val"
-  done
-  echo "════════════════════════════════════════════════════════════════════════════════"
-
-  jq -s '{k8s: .[0], ocp: .[1]}' "$RESULTS_DIR/k8s.json" "$RESULTS_DIR/ocp.json" \
-    > "$RESULTS_DIR/summary.json"
-  info "Summary saved to $RESULTS_DIR/summary.json"
-elif [[ -f "$RESULTS_DIR/k8s.json" ]]; then
-  info "Single-cluster run complete. Set OCP_CONTEXT to enable side-by-side comparison."
-fi
-
-# ── cleanup ───────────────────────────────────────────────────────────────────
-if [[ "${KEEP_CLUSTER:-0}" != "1" ]]; then
-  info "Deleting kind cluster '${K8S_CLUSTER}'..."
-  kind delete cluster --name "$K8S_CLUSTER"
+if [ "$SMOKE_ONLY" = true ]; then
+  info "Smoke-only mode: done."
 else
-  warn "KEEP_CLUSTER=1 — cluster '${K8S_CLUSTER}' left running."
+  info "Done. Results: $RESULTS_DIR"
 fi
-
-info "Done."
