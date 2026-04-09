@@ -58,6 +58,11 @@ Fixed payload keeps message size consistent across runs.
 | Prometheus | 9094 | http://localhost:9094 |
 | Grafana | 3002 | http://localhost:3002 |
 
+Grafana auto-provisions these dashboards in the `Tech Comparison Lab` folder:
+- `Kafka vs RabbitMQ Overview`
+- `Kafka Standard`
+- `RabbitMQ Standard`
+
 ## Customization
 
 ```bash
@@ -100,7 +105,9 @@ Consumer distribution (kafka):
 
 ## Troubleshooting
 
-**Kafka health check fails (>5 min)** — Bitnami Kafka KRaft needs ~30s to initialize. `./run.sh` waits up to 5 min.
+**Kafka health check fails (>5 min)** — Kafka KRaft may need ~30-60s to initialize. `./run.sh` waits up to 5 min.
+
+**RabbitMQ not ready after 300s** — The runner now waits for both `rabbitmq-diagnostics ping` and a real AMQP dry-run. On cold starts with old Docker volumes, retry with `./run.sh --clean`.
 
 **`kafka-topics.sh: command not found`** — Expected on the host. The experiment runs Kafka CLI inside the container via `/opt/kafka/bin/kafka-topics.sh`.
 

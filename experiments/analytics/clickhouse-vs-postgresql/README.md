@@ -93,6 +93,11 @@ already exists, `run.sh` falls back to that binary.
 
 ClickHouse benchmark credentials are `bench` / `benchpass`.
 
+Grafana auto-provisions these dashboards in the `Tech Comparison Lab` folder:
+- `ClickHouse vs PostgreSQL Overview`
+- `ClickHouse Standard`
+- `PostgreSQL Standard`
+
 ## Sample Results (10M rows, MacBook Pro M2 Pro)
 
 ```

@@ -1,6 +1,755 @@
 {
   "schema_version": "results-index/v1",
-  "generated_at": "2026-04-04T03:43:15Z",
-  "count": 0,
-  "experiments": []
+  "generated_at": "2026-04-07T10:05:58Z",
+  "count": 5,
+  "experiments": [
+    {
+      "id": "clickhouse-vs-postgresql",
+      "name": "ClickHouse vs PostgreSQL",
+      "category": "analytics",
+      "summary_file": "experiments/analytics/clickhouse-vs-postgresql/results/summary.json",
+      "timestamp": "2026-04-06T13:36:55Z",
+      "mode": "full",
+      "result_count": 10,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "clickhouse-vs-postgresql",
+          "name": "ClickHouse vs PostgreSQL",
+          "category": "analytics",
+          "path": "experiments/analytics/clickhouse-vs-postgresql"
+        },
+        "run_id": "clickhouse-1775482615",
+        "timestamp": "2026-04-06T13:36:55Z",
+        "mode": "full",
+        "config": {
+          "row_count": 10000000,
+          "batch_size": 100000,
+          "workers": 4,
+          "query_iter": 5
+        },
+        "sources": [
+          {
+            "name": "clickhouse",
+            "file": "results/clickhouse.json"
+          },
+          {
+            "name": "postgres",
+            "file": "results/postgres.json"
+          }
+        ],
+        "results": [
+          {
+            "db": "clickhouse",
+            "op": "insert",
+            "count": 10000000,
+            "iterations": 0,
+            "p50_ms": 10384.228,
+            "p95_ms": 87651.02,
+            "p99_ms": 145855.844,
+            "min_ms": 1440.808,
+            "max_ms": 147803.682,
+            "mean_ms": 26286.72224,
+            "throughput_rows_sec": 15160.383653403745,
+            "storage_bytes": 818594374,
+            "total_ms": 659613
+          },
+          {
+            "db": "clickhouse",
+            "op": "count-group",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 535.929,
+            "p95_ms": 983.316,
+            "p99_ms": 983.316,
+            "min_ms": 297.768,
+            "max_ms": 983.316,
+            "mean_ms": 575.1584,
+            "throughput_rows_sec": 3477295.239795801,
+            "total_ms": 2875
+          },
+          {
+            "db": "clickhouse",
+            "op": "time-range",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 94.58,
+            "p95_ms": 257.609,
+            "p99_ms": 257.609,
+            "min_ms": 52.495,
+            "max_ms": 257.609,
+            "mean_ms": 139.60660000000001,
+            "throughput_rows_sec": 14325756.47368364,
+            "total_ms": 698
+          },
+          {
+            "db": "clickhouse",
+            "op": "agg-revenue",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 341.434,
+            "p95_ms": 1133.595,
+            "p99_ms": 1133.595,
+            "min_ms": 100.505,
+            "max_ms": 1133.595,
+            "mean_ms": 412.47,
+            "throughput_rows_sec": 4848816.918976875,
+            "total_ms": 2062
+          },
+          {
+            "db": "clickhouse",
+            "op": "distinct-users",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 174.597,
+            "p95_ms": 518.045,
+            "p99_ms": 518.045,
+            "min_ms": 127.862,
+            "max_ms": 518.045,
+            "mean_ms": 250.56220000000002,
+            "throughput_rows_sec": 7981999.792268455,
+            "total_ms": 1252
+          },
+          {
+            "db": "postgres",
+            "op": "insert",
+            "count": 10000000,
+            "iterations": 0,
+            "p50_ms": 40635.998,
+            "p95_ms": 212889.002,
+            "p99_ms": 263702.736,
+            "min_ms": 9369.12,
+            "max_ms": 275832.075,
+            "mean_ms": 79893.82001000001,
+            "throughput_rows_sec": 4978.847995462328,
+            "storage_bytes": 2354782208,
+            "total_ms": 2008496
+          },
+          {
+            "db": "postgres",
+            "op": "count-group",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 859.934,
+            "p95_ms": 13957.193,
+            "p99_ms": 13957.193,
+            "min_ms": 702.728,
+            "max_ms": 13957.193,
+            "mean_ms": 3507.2982,
+            "throughput_rows_sec": 570239.056829162,
+            "total_ms": 17536
+          },
+          {
+            "db": "postgres",
+            "op": "time-range",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 2438,
+            "p95_ms": 3422.85,
+            "p99_ms": 3422.85,
+            "min_ms": 2146.81,
+            "max_ms": 3422.85,
+            "mean_ms": 2587.0492000000004,
+            "throughput_rows_sec": 773080.0786759236,
+            "total_ms": 12935
+          },
+          {
+            "db": "postgres",
+            "op": "agg-revenue",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 2372.987,
+            "p95_ms": 2663.452,
+            "p99_ms": 2663.452,
+            "min_ms": 1557.238,
+            "max_ms": 2663.452,
+            "mean_ms": 2229.5498,
+            "throughput_rows_sec": 897037.0921449492,
+            "total_ms": 11147
+          },
+          {
+            "db": "postgres",
+            "op": "distinct-users",
+            "count": 10000000,
+            "iterations": 5,
+            "p50_ms": 7144.813,
+            "p95_ms": 25543.689,
+            "p99_ms": 25543.689,
+            "min_ms": 5822.35,
+            "max_ms": 25543.689,
+            "mean_ms": 12199.4656,
+            "throughput_rows_sec": 163941.41423228986,
+            "total_ms": 60997
+          }
+        ]
+      }
+    },
+    {
+      "id": "grpc-vs-rest",
+      "name": "gRPC vs REST",
+      "category": "api",
+      "summary_file": "experiments/api/grpc-vs-rest/results/summary.json",
+      "timestamp": "2026-04-04T08:53:52Z",
+      "mode": "full",
+      "result_count": 6,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "grpc-vs-rest",
+          "name": "gRPC vs REST",
+          "category": "api",
+          "path": "experiments/api/grpc-vs-rest"
+        },
+        "run_id": "rest-1775292832",
+        "timestamp": "2026-04-04T08:53:52Z",
+        "mode": "full",
+        "config": {
+          "count": 100000,
+          "workers": 50
+        },
+        "sources": [
+          {
+            "name": "rest",
+            "file": "results/rest.json"
+          },
+          {
+            "name": "grpc",
+            "file": "results/grpc.json"
+          }
+        ],
+        "results": [
+          {
+            "protocol": "rest",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 26.607,
+            "p95_ms": 161.683,
+            "p99_ms": 325.719,
+            "min_ms": 0.54,
+            "max_ms": 1231.752,
+            "mean_ms": 51.022496270000005,
+            "throughput_rps": 975.9924990739794,
+            "errors": 377,
+            "total_ms": 102073
+          },
+          {
+            "protocol": "rest",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 10.882,
+            "p95_ms": 68.063,
+            "p99_ms": 148.352,
+            "min_ms": 0.089,
+            "max_ms": 664.991,
+            "mean_ms": 20.24665895,
+            "throughput_rps": 2467.5004158172483,
+            "errors": 0,
+            "total_ms": 40526
+          },
+          {
+            "protocol": "rest",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 30.178,
+            "p95_ms": 155.272,
+            "p99_ms": 304.861,
+            "min_ms": 0.387,
+            "max_ms": 1130.763,
+            "mean_ms": 52.75036986,
+            "throughput_rps": 938.1524185467774,
+            "errors": 1017,
+            "total_ms": 105508
+          },
+          {
+            "protocol": "grpc",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 0.883,
+            "p95_ms": 2.422,
+            "p99_ms": 5.9,
+            "min_ms": 0.114,
+            "max_ms": 30006.551,
+            "mean_ms": 16.128311019999998,
+            "throughput_rps": 3099.887036080352,
+            "errors": 0,
+            "total_ms": 32259
+          },
+          {
+            "protocol": "grpc",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 0.89,
+            "p95_ms": 1.887,
+            "p99_ms": 2.817,
+            "min_ms": 0.119,
+            "max_ms": 15.992,
+            "mean_ms": 1.01255104,
+            "throughput_rps": 49325.89284005716,
+            "errors": 0,
+            "total_ms": 2027
+          },
+          {
+            "protocol": "grpc",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 0.882,
+            "p95_ms": 2.02,
+            "p99_ms": 4.236,
+            "min_ms": 0.168,
+            "max_ms": 16.217,
+            "mean_ms": 1.05394627,
+            "throughput_rps": 47371.58466418372,
+            "errors": 0,
+            "total_ms": 2110
+          }
+        ]
+      }
+    },
+    {
+      "id": "redis-vs-valkey",
+      "name": "Redis vs Valkey",
+      "category": "cache",
+      "summary_file": "experiments/cache/redis-vs-valkey/results/summary.json",
+      "timestamp": "2026-04-06T12:39:53Z",
+      "mode": "full",
+      "result_count": 8,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "redis-vs-valkey",
+          "name": "Redis vs Valkey",
+          "category": "cache",
+          "path": "experiments/cache/redis-vs-valkey"
+        },
+        "run_id": "redis-1775479193",
+        "timestamp": "2026-04-06T12:39:53Z",
+        "mode": "full",
+        "config": {
+          "key_count": 10000000,
+          "iterations": 100000,
+          "pipe_size": 100,
+          "workers": 16
+        },
+        "sources": [
+          {
+            "name": "redis",
+            "file": "results/redis.json"
+          },
+          {
+            "name": "valkey",
+            "file": "results/valkey.json"
+          }
+        ],
+        "results": [
+          {
+            "db": "redis",
+            "op": "pipeline-set",
+            "count": 10000000,
+            "workers": 16,
+            "p50_ms": 13.145,
+            "p95_ms": 65.135,
+            "p99_ms": 168.936,
+            "min_ms": 0.562,
+            "max_ms": 2647.717,
+            "mean_ms": 23.382191380000002,
+            "throughput_ops_sec": 67589.49480213503,
+            "memory_used": "2.57G",
+            "key_count": 10000000,
+            "total_ms": 147951
+          },
+          {
+            "db": "redis",
+            "op": "get",
+            "count": 100000,
+            "workers": 16,
+            "p50_ms": 1.818,
+            "p95_ms": 5.665,
+            "p99_ms": 12.222,
+            "min_ms": 0.305,
+            "max_ms": 151.979,
+            "mean_ms": 2.457254,
+            "throughput_ops_sec": 6499.59168346371,
+            "total_ms": 15385
+          },
+          {
+            "db": "redis",
+            "op": "pipeline-get",
+            "count": 10000000,
+            "workers": 16,
+            "p50_ms": 39.674,
+            "p95_ms": 101.859,
+            "p99_ms": 169.092,
+            "min_ms": 3.434,
+            "max_ms": 877.068,
+            "mean_ms": 48.5972231,
+            "throughput_ops_sec": 32871.93953936232,
+            "total_ms": 304210
+          },
+          {
+            "db": "redis",
+            "op": "mixed",
+            "count": 10000000,
+            "workers": 16,
+            "p50_ms": 35.405,
+            "p95_ms": 76.601,
+            "p99_ms": 126.42,
+            "min_ms": 2.925,
+            "max_ms": 753.902,
+            "mean_ms": 40.7781668,
+            "throughput_ops_sec": 39128.50141358216,
+            "total_ms": 255568
+          },
+          {
+            "db": "valkey",
+            "op": "pipeline-set",
+            "count": 10000000,
+            "workers": 16,
+            "p50_ms": 8.242,
+            "p95_ms": 24.157,
+            "p99_ms": 51.718,
+            "min_ms": 0.644,
+            "max_ms": 361.144,
+            "mean_ms": 10.634882209999999,
+            "throughput_ops_sec": 146142.17565586622,
+            "memory_used": "2.30G",
+            "key_count": 10000000,
+            "total_ms": 68426
+          },
+          {
+            "db": "valkey",
+            "op": "get",
+            "count": 100000,
+            "workers": 16,
+            "p50_ms": 1.61,
+            "p95_ms": 4.431,
+            "p99_ms": 7.798,
+            "min_ms": 0.243,
+            "max_ms": 58.35,
+            "mean_ms": 2.01982974,
+            "throughput_ops_sec": 7897.46461079473,
+            "total_ms": 12662
+          },
+          {
+            "db": "valkey",
+            "op": "pipeline-get",
+            "count": 10000000,
+            "workers": 16,
+            "p50_ms": 25.289,
+            "p95_ms": 73.669,
+            "p99_ms": 143.48,
+            "min_ms": 1.182,
+            "max_ms": 802.114,
+            "mean_ms": 32.15906075,
+            "throughput_ops_sec": 49648.00335167713,
+            "total_ms": 201417
+          },
+          {
+            "db": "valkey",
+            "op": "mixed",
+            "count": 10000000,
+            "workers": 16,
+            "p50_ms": 23.38,
+            "p95_ms": 55.01,
+            "p99_ms": 96.291,
+            "min_ms": 2.187,
+            "max_ms": 778.193,
+            "mean_ms": 27.77944163,
+            "throughput_ops_sec": 57377.89934151369,
+            "total_ms": 174283
+          }
+        ]
+      }
+    },
+    {
+      "id": "postgresql-vs-mongodb",
+      "name": "PostgreSQL vs MongoDB",
+      "category": "databases",
+      "summary_file": "experiments/databases/postgresql-vs-mongodb/results/summary.json",
+      "timestamp": "2026-04-04T05:02:34Z",
+      "mode": "full",
+      "result_count": 8,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "postgresql-vs-mongodb",
+          "name": "PostgreSQL vs MongoDB",
+          "category": "databases",
+          "path": "experiments/databases/postgresql-vs-mongodb"
+        },
+        "run_id": "postgres-1775278954",
+        "timestamp": "2026-04-04T05:02:34Z",
+        "mode": "full",
+        "config": {
+          "insert_count": 10000000,
+          "query_iterations": 1000,
+          "agg_iterations": 10,
+          "update_iterations": 100,
+          "workers": 8,
+          "batch_size": 1000
+        },
+        "sources": [
+          {
+            "name": "postgres",
+            "file": "results/postgres.json"
+          },
+          {
+            "name": "mongo",
+            "file": "results/mongo.json"
+          }
+        ],
+        "results": [
+          {
+            "db": "postgres",
+            "op": "insert",
+            "count": 10000000,
+            "workers": 8,
+            "p50_ms": 1084.142,
+            "p95_ms": 6681.793,
+            "p99_ms": 24110.997,
+            "min_ms": 228.977,
+            "max_ms": 2094398.501,
+            "mean_ms": 2460.6285155,
+            "throughput_ops_sec": 3250.978400930029,
+            "storage_bytes": 21030715392,
+            "total_ms": 3075997
+          },
+          {
+            "db": "postgres",
+            "op": "query",
+            "count": 1000,
+            "workers": 1,
+            "p50_ms": 0.955,
+            "p95_ms": 2.865,
+            "p99_ms": 4.646,
+            "min_ms": 0.558,
+            "max_ms": 23.836,
+            "mean_ms": 1.29292,
+            "throughput_ops_sec": 773.0255068462521,
+            "total_ms": 1293
+          },
+          {
+            "db": "postgres",
+            "op": "agg",
+            "count": 10,
+            "workers": 1,
+            "p50_ms": 93795.648,
+            "p95_ms": 125149.798,
+            "p99_ms": 125149.798,
+            "min_ms": 83192.699,
+            "max_ms": 125149.798,
+            "mean_ms": 98983.6466,
+            "throughput_ops_sec": 0.010102678373382813,
+            "total_ms": 989836
+          },
+          {
+            "db": "postgres",
+            "op": "update",
+            "count": 100,
+            "workers": 1,
+            "p50_ms": 204.375,
+            "p95_ms": 664.083,
+            "p99_ms": 2232.382,
+            "min_ms": 127.414,
+            "max_ms": 3801.144,
+            "mean_ms": 298.45744,
+            "throughput_ops_sec": 3.3505493680056846,
+            "total_ms": 29845
+          },
+          {
+            "db": "mongo",
+            "op": "insert",
+            "count": 10000000,
+            "workers": 8,
+            "p50_ms": 608.918,
+            "p95_ms": 2795.716,
+            "p99_ms": 4933.423,
+            "min_ms": 36.701,
+            "max_ms": 14429.377,
+            "mean_ms": 992.4966902,
+            "throughput_ops_sec": 8053.321253159591,
+            "storage_bytes": 2244898816,
+            "index_build_ms": 23,
+            "total_ms": 1241723
+          },
+          {
+            "db": "mongo",
+            "op": "query",
+            "count": 1000,
+            "workers": 1,
+            "p50_ms": 5.37,
+            "p95_ms": 11.357,
+            "p99_ms": 18.427,
+            "min_ms": 1.538,
+            "max_ms": 87.812,
+            "mean_ms": 6.0308969999999995,
+            "throughput_ops_sec": 165.76854877657252,
+            "total_ms": 6032
+          },
+          {
+            "db": "mongo",
+            "op": "agg",
+            "count": 10,
+            "workers": 1,
+            "p50_ms": 136257.82,
+            "p95_ms": 182866.361,
+            "p99_ms": 182866.361,
+            "min_ms": 114765.564,
+            "max_ms": 182866.361,
+            "mean_ms": 147633.68269999998,
+            "throughput_ops_sec": 0.006773521271290409,
+            "total_ms": 1476336
+          },
+          {
+            "db": "mongo",
+            "op": "update",
+            "count": 100,
+            "workers": 1,
+            "p50_ms": 27.295,
+            "p95_ms": 52.232,
+            "p99_ms": 76.102,
+            "min_ms": 17.44,
+            "max_ms": 1329.812,
+            "mean_ms": 43.52546,
+            "throughput_ops_sec": 22.97427578174946,
+            "total_ms": 4352
+          }
+        ]
+      }
+    },
+    {
+      "id": "kafka-vs-rabbitmq",
+      "name": "Kafka vs RabbitMQ",
+      "category": "messaging",
+      "summary_file": "experiments/messaging/kafka-vs-rabbitmq/results/summary.json",
+      "timestamp": "2026-04-07T09:57:27Z",
+      "mode": "full",
+      "result_count": 4,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "kafka-vs-rabbitmq",
+          "name": "Kafka vs RabbitMQ",
+          "category": "messaging",
+          "path": "experiments/messaging/kafka-vs-rabbitmq"
+        },
+        "run_id": "kafka-1775555847",
+        "timestamp": "2026-04-07T09:57:27Z",
+        "mode": "full",
+        "config": {
+          "msg_count": 1000000,
+          "batch_size": 1000,
+          "consumers": 3,
+          "partitions": 3
+        },
+        "sources": [
+          {
+            "name": "kafka",
+            "file": "results/kafka.json"
+          },
+          {
+            "name": "rabbitmq",
+            "file": "results/rabbitmq.json"
+          }
+        ],
+        "results": [
+          {
+            "db": "kafka",
+            "op": "produce",
+            "count": 1000000,
+            "batch": 1000,
+            "p50_ms": 70.8,
+            "p95_ms": 305.769,
+            "p99_ms": 944.53,
+            "min_ms": 13.283,
+            "max_ms": 1733.71,
+            "mean_ms": 115.09074000000001,
+            "throughput_msg_sec": 8615.320555837263,
+            "total_ms": 116072
+          },
+          {
+            "db": "kafka",
+            "op": "consume",
+            "count": 1000000,
+            "batch": 0,
+            "p50_ms": 0,
+            "p95_ms": 0,
+            "p99_ms": 0,
+            "min_ms": 0,
+            "max_ms": 0,
+            "mean_ms": 0,
+            "throughput_msg_sec": 1433.0531592776558,
+            "consumer_stats": [
+              {
+                "id": 0,
+                "msgs": 333333,
+                "qps": 477.68390874149884
+              },
+              {
+                "id": 1,
+                "msgs": 333334,
+                "qps": 477.68534179465814
+              },
+              {
+                "id": 2,
+                "msgs": 333333,
+                "qps": 477.68390874149884
+              }
+            ],
+            "total_ms": 697810
+          },
+          {
+            "db": "rabbitmq",
+            "op": "produce",
+            "count": 1000000,
+            "batch": 1000,
+            "p50_ms": 28.384,
+            "p95_ms": 75.356,
+            "p99_ms": 131.128,
+            "min_ms": 14.343,
+            "max_ms": 197.913,
+            "mean_ms": 33.931989,
+            "throughput_msg_sec": 29470.045875143387,
+            "total_ms": 33932
+          },
+          {
+            "db": "rabbitmq",
+            "op": "consume",
+            "count": 1000000,
+            "batch": 0,
+            "p50_ms": 0,
+            "p95_ms": 0,
+            "p99_ms": 0,
+            "min_ms": 0,
+            "max_ms": 0,
+            "mean_ms": 0,
+            "throughput_msg_sec": 75720.39437078033,
+            "consumer_stats": [
+              {
+                "id": 0,
+                "msgs": 330500,
+                "qps": 25025.590339542898
+              },
+              {
+                "id": 1,
+                "msgs": 334200,
+                "qps": 25305.755798714785
+              },
+              {
+                "id": 2,
+                "msgs": 335300,
+                "qps": 25389.048232522644
+              }
+            ],
+            "total_ms": 13206
+          }
+        ]
+      }
+    }
+  ]
 }

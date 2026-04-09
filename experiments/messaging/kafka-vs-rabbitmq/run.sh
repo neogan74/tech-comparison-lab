@@ -120,11 +120,12 @@ wait_for_kafka() {
 
 wait_for_rabbitmq() {
   log "Waiting for RabbitMQ (port 5672)..."
-  local max=24 i=0
+  local max=60 i=0
   until docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T rabbitmq \
-      rabbitmq-diagnostics check_port_connectivity &>/dev/null; do
+      rabbitmq-diagnostics -q ping &>/dev/null && \
+      "$BINARY" --db rabbitmq --dry-run --addr "$RABBIT_ADDR" &>/dev/null; do
     i=$((i+1))
-    [ $i -ge $max ] && { echo "error: RabbitMQ not ready after 120s" >&2; exit 1; }
+    [ $i -ge $max ] && { echo "error: RabbitMQ not ready after 300s" >&2; exit 1; }
     sleep 5
   done
   log "RabbitMQ ready."
