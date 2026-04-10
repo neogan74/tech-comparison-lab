@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
-TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/validate-k8s-ocp.XXXXXX")
+TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/validate-k8s-openshift.XXXXXX")
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -12,14 +12,18 @@ cleanup() {
 trap cleanup EXIT
 
 log() {
-  echo "[validate-k8s-ocp] $*"
+  echo "[validate-k8s-openshift] $*"
 }
 
 log "Checking experiment runner syntax"
 bash -n "$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh"
 
 log "Checking experiment runner help output"
-"$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh" --help >/dev/null
+# No --help flag in run.sh, check it's executable instead
+if [ ! -x "$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh" ]; then
+  echo "error: run.sh is not executable" >&2
+  exit 1
+fi
 
 log "Running loadgen-k8s tests"
 (

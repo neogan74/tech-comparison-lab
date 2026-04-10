@@ -6,20 +6,22 @@ REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
 EXPERIMENT_DIR="$REPO_ROOT/experiments/orchestration/k8s-vs-openshift"
 
 log() {
-  echo "[smoke-k8s-ocp] $*"
+  echo "[smoke-k8s-openshift] $*"
 }
 
-SMOKE_COUNT="${SMOKE_COUNT:-100}"
-SMOKE_ROUNDS="${SMOKE_ROUNDS:-1}"
-SMOKE_REPLICAS="${SMOKE_REPLICAS:-3}"
+cleanup() {
+  if [[ "${KEEP_CLUSTER:-0}" != "1" ]]; then
+    log "Cleaning up kind cluster..."
+    kind delete cluster --name bench-k8s 2>/dev/null || true
+  fi
+}
 
-log "Starting kind-only smoke run"
+trap cleanup EXIT
+
+log "Starting smoke test (kind only, no OpenShift)"
 (
   cd "$EXPERIMENT_DIR"
-  SMOKE_COUNT="$SMOKE_COUNT" \
-  SMOKE_ROUNDS="$SMOKE_ROUNDS" \
-  SMOKE_REPLICAS="$SMOKE_REPLICAS" \
-  ./run.sh --clean --smoke-only
+  SMOKE_ONLY=1 ./run.sh
 )
 
-log "Smoke run completed"
+log "Smoke test completed"
