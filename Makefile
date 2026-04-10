@@ -13,6 +13,7 @@ EXPERIMENTS := \
 	help \
 	list \
 	collect-results \
+	render-results \
 	validate \
 	smoke \
 	validate-all \
@@ -25,6 +26,7 @@ help:
 	@echo ""
 	@echo "  make list"
 	@echo "  make collect-results"
+	@echo "  make render-results"
 	@echo "  make validate-all"
 	@echo "  make smoke-all"
 	@echo "  make validate EXP=<experiment>"
@@ -38,6 +40,9 @@ list:
 
 collect-results:
 	bash "./scripts/collect-results.sh"
+
+render-results:
+	bash "./scripts/render-results.sh"
 
 validate:
 ifndef EXP

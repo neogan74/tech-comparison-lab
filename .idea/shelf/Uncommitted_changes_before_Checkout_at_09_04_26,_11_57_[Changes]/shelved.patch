@@ -1,0 +1,250 @@
+Index: .idea/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+--- /dev/null	(date 1775728594580)
++++ b/.idea/.gitignore	(date 1775728594580)
+@@ -0,0 +1,10 @@
++# Default ignored files
++/shelf/
++/workspace.xml
++# Ignored default folder with query files
++/queries/
++# Datasource local storage ignored files
++/dataSources/
++/dataSources.local.xml
++# Editor-based HTTP Client requests
++/httpRequests/
+Index: scripts/smoke-k8s-vs-openshift.sh
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/scripts/smoke-k8s-vs-openshift.sh b/scripts/smoke-k8s-vs-openshift.sh
+new file mode 100644
+--- /dev/null	(date 1775714916179)
++++ b/scripts/smoke-k8s-vs-openshift.sh	(date 1775714916179)
+@@ -0,0 +1,27 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
++REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
++EXPERIMENT_DIR="$REPO_ROOT/experiments/orchestration/k8s-vs-openshift"
++
++log() {
++  echo "[smoke-k8s-openshift] $*"
++}
++
++cleanup() {
++  if [[ "${KEEP_CLUSTER:-0}" != "1" ]]; then
++    log "Cleaning up kind cluster..."
++    kind delete cluster --name bench-k8s 2>/dev/null || true
++  fi
++}
++
++trap cleanup EXIT
++
++log "Starting smoke test (kind only, no OpenShift)"
++(
++  cd "$EXPERIMENT_DIR"
++  SMOKE_ONLY=1 ./run.sh
++)
++
++log "Smoke test completed"
+Index: scripts/validate-k8s-vs-openshift.sh
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/scripts/validate-k8s-vs-openshift.sh b/scripts/validate-k8s-vs-openshift.sh
+new file mode 100644
+--- /dev/null	(date 1775714916177)
++++ b/scripts/validate-k8s-vs-openshift.sh	(date 1775714916177)
+@@ -0,0 +1,34 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
++REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
++TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/validate-k8s-openshift.XXXXXX")
++
++cleanup() {
++  rm -rf "$TMP_DIR"
++}
++
++trap cleanup EXIT
++
++log() {
++  echo "[validate-k8s-openshift] $*"
++}
++
++log "Checking experiment runner syntax"
++bash -n "$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh"
++
++log "Checking experiment runner help output"
++# No --help flag in run.sh, check it's executable instead
++if [ ! -x "$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh" ]; then
++  echo "error: run.sh is not executable" >&2
++  exit 1
++fi
++
++log "Running loadgen-k8s tests"
++(
++  cd "$REPO_ROOT/benchmarks/loadgen-k8s"
++  GOCACHE="$TMP_DIR/go-build" go test ./...
++)
++
++log "Validation completed"
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+new file mode 100644
+--- /dev/null	(date 1775728592451)
++++ b/.idea/vcs.xml	(date 1775728592451)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="VcsDirectoryMappings">
++    <mapping directory="" vcs="Git" />
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/modules.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/modules.xml b/.idea/modules.xml
+new file mode 100644
+--- /dev/null	(date 1775728592447)
++++ b/.idea/modules.xml	(date 1775728592447)
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectModuleManager">
++    <modules>
++      <module fileurl="file://$PROJECT_DIR$/.idea/tech-comparison-lab.iml" filepath="$PROJECT_DIR$/.idea/tech-comparison-lab.iml" />
++    </modules>
++  </component>
++</project>
+\ No newline at end of file
+Index: .idea/tech-comparison-lab.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/tech-comparison-lab.iml b/.idea/tech-comparison-lab.iml
+new file mode 100644
+--- /dev/null	(date 1775728592227)
++++ b/.idea/tech-comparison-lab.iml	(date 1775728592227)
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<module type="WEB_MODULE" version="4">
++  <component name="Go" enabled="true" />
++  <component name="NewModuleRootManager">
++    <content url="file://$MODULE_DIR$" />
++    <orderEntry type="inheritedJdk" />
++    <orderEntry type="sourceFolder" forTests="false" />
++  </component>
++</module>
+\ No newline at end of file
+Index: AGENTS.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/AGENTS.md b/AGENTS.md
+new file mode 100644
+--- /dev/null	(date 1775715120470)
++++ b/AGENTS.md	(date 1775715120470)
+@@ -0,0 +1,83 @@
++# Tech Comparison Lab — Agent Instructions
++
++## Repository Structure
++
++- `experiments/` — Technology comparison experiments (each has `run.sh` and `README.md`)
++- `benchmarks/` — Go load generators for specific domains (db, http, cache, k8s, etc.)
++- `apps/bench-api` — Go test server (REST + gRPC) for HTTP benchmarks
++- `deployments/docker-compose/` — Infrastructure (PostgreSQL, MongoDB, Redis, Prometheus, Grafana)
++- `scripts/` — CI validation and smoke test scripts
++
++## Running Experiments
++
++Each experiment directory contains a `run.sh` script with consistent flags:
++- `--smoke-only` — Quick test (~1k docs or requests, ~30 sec)
++- `--clean` — Remove Docker volumes before starting (database experiments)
++
++```bash
++cd experiments/databases/postgresql-vs-mongodb
++./run.sh --smoke-only    # Quick validation
++./run.sh --clean          # Full benchmark (10M docs default)
++```
++
++Environment variables for tuning:
++- `INSERT_COUNT` / `COUNT` — Dataset size (default varies by experiment)
++- `WORKERS` — Concurrency
++- `SKIP_BUILD=1` — Use existing binary instead of rebuilding
++- `SMOKE_COUNT` — Override smoke test size
++
++## Validation
++
++CI runs validation scripts in `scripts/`:
++1. `bash -n` — Syntax check on experiment runners
++2. `go test` — Unit tests in benchmark packages
++3. End-to-end smoke test
++
++Run locally:
++```bash
++bash ./scripts/validate-postgresql-vs-mongodb.sh
++bash ./scripts/smoke-postgresql-vs-mongodb.sh
++```
++
++## Build Patterns
++
++- Go 1.23+ required
++- Each benchmark has its own Go module (`benchmarks/*/go.mod`)
++- Binary output:
++  - `benchmarks/loadgen-db/bin/loadgen-db`
++  - `benchmarks/loadgen-http/loadgen-http`
++  - `benchmarks/loadgen-k8s/loadgen-k8s`
++  - `apps/bench-api/bench-api`
++
++If `go` unavailable but binary exists, `run.sh` falls back to it.
++
++## Infrastructure
++
++Docker Compose v2 required (`docker compose`, not `docker-compose`).
++Stack managed in `deployments/docker-compose/docker-compose.yml`:
++- `postgres` :5432, `mongo` :27017, `redis` :6379, `rabbitmq` :5672
++- `prometheus` :9090, `grafana` :3000
++
++Use `.env.example` in `deployments/docker-compose/` to override ports/passwords.
++
++## Testing
++
++```bash
++cd benchmarks/loadgen-db      # or any loadgen-* directory
++go test ./...
++```
++
++Tests are unit-level; integration happens via smoke tests in `scripts/`.
++
++## Status Matrix
++
++Check `README.md` for experiment status:
++- **smoke-tested** — Has CI validation and passing smoke test
++- **in progress** — Implementation exists but no CI yet
++
++When adding new experiments, follow the pattern of `postgresql-vs-mongodb`:
++1. Add benchmark in `benchmarks/loadgen-*/`
++2. Add experiment in `experiments/category/name/` with `run.sh`
++3. Add validation script in `scripts/validate-*.sh`
++4. Add smoke test in `scripts/smoke-*.sh`
++5. Update `.github/workflows/ci.yaml` with new jobs
