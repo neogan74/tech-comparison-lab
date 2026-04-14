@@ -225,15 +225,39 @@ render_summary() {
   done
   echo "════════════════════════════════════════════════════════════════════════════════"
 
-  jq -s '{
-    config: {
-      count: '"$(selected_count)"',
-      rounds: '"$(selected_rounds)"',
-      replicas: '"$(selected_replicas)"'
-    },
-    k8s: .[0],
-    ocp: .[1]
-  }' "$RESULTS_DIR/k8s.json" "$RESULTS_DIR/ocp.json" > "$RESULTS_DIR/summary.json"
+  jq -s '
+    .[0] as $k8s
+    | .[1] as $ocp
+    | {
+        schema_version: "results-summary/v1",
+        experiment: {
+          id: "k8s-vs-openshift",
+          name: "Kubernetes vs OpenShift",
+          category: "orchestration",
+          path: "experiments/orchestration/k8s-vs-openshift"
+        },
+        run_id: ("k8s-vs-openshift-" + ($k8s.timestamp | tostring)),
+        timestamp: $k8s.timestamp,
+        mode: "full",
+        config: {
+          count: '"$(selected_count)"',
+          rounds: '"$(selected_rounds)"',
+          replicas: '"$(selected_replicas)"'
+        },
+        sources: [
+          {name: "k8s", file: "results/k8s.json"},
+          {name: "ocp", file: "results/ocp.json"}
+        ],
+        results: (
+          [ $k8s.results[] | . + {cluster: $k8s.cluster_type} ] +
+          [ $ocp.results[] | . + {cluster: $ocp.cluster_type} ]
+        ),
+        clusters: {
+          k8s: $k8s,
+          ocp: $ocp
+        }
+      }
+  ' "$RESULTS_DIR/k8s.json" "$RESULTS_DIR/ocp.json" > "$RESULTS_DIR/summary.json"
   info "Summary saved to $RESULTS_DIR/summary.json"
 }
 

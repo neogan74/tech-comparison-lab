@@ -21,7 +21,7 @@ trap cleanup EXIT
 log "Starting smoke test (kind only, no OpenShift)"
 (
   cd "$EXPERIMENT_DIR"
-  SMOKE_ONLY=1 ./run.sh
+  ./run.sh --smoke-only
 )
 
 log "Smoke test completed"

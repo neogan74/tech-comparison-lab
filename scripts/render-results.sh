@@ -38,7 +38,7 @@ render_experiment_page() {
       else "-" end;
 
     def subject:
-      .db // .protocol // "n/a";
+      .db // .protocol // .cluster // .cluster_type // "n/a";
 
     def fmt_num:
       if . == null then "-"

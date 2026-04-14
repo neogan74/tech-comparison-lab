@@ -5,9 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="189f6d31-e7d8-4fcf-8c41-6c86b9223320" name="Changes" comment="feat: update IntelliJ project config, improve k8s vs OpenShift scripts, and streamline docs">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/loadgen-msg/internal/nats/bench.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/loadgen-msg/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/loadgen-msg/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/loadgen-msg/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/loadgen-msg/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/loadgen-msg/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/loadgen-msg/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/results-summary-v1.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/results-summary-v1.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/experiments/orchestration/k8s-vs-openshift/run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/orchestration/k8s-vs-openshift/run.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/render-results.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/render-results.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scripts/smoke-k8s-vs-openshift.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/smoke-k8s-vs-openshift.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scripts/validate-k8s-vs-openshift.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/validate-k8s-vs-openshift.sh" afterDir="false" />
     </list>
@@ -24,30 +32,30 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="oci-ci" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "neogan74"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;neogan74&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/neogan74/tech-comparison-lab.git",
-    "accountId": "9ad21b5f-9524-4adb-9a5f-b13c55f8273b"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/neogan74/tech-comparison-lab.git&quot;,
+    &quot;accountId&quot;: &quot;9ad21b5f-9524-4adb-9a5f-b13c55f8273b&quot;
   }
-}]]></component>
+}</component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="3C7F9xnO1UNoXJywlz4a2egUYAD" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -66,6 +74,7 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "nats",
     "go.sdk.automatically.set": "true",
     "last_opened_file_path": "/Users/neogan",
     "node.js.detected.package.eslint": "true",

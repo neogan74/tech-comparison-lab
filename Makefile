@@ -7,7 +7,8 @@ EXPERIMENTS := \
 	grpc-vs-rest \
 	redis-vs-valkey \
 	clickhouse-vs-postgresql \
-	kafka-vs-rabbitmq
+	kafka-vs-rabbitmq \
+	k8s-vs-openshift
 
 .PHONY: \
 	help \

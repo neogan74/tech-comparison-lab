@@ -19,11 +19,7 @@ log "Checking experiment runner syntax"
 bash -n "$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh"
 
 log "Checking experiment runner help output"
-# No --help flag in run.sh, check it's executable instead
-if [ ! -x "$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh" ]; then
-  echo "error: run.sh is not executable" >&2
-  exit 1
-fi
+"$REPO_ROOT/experiments/orchestration/k8s-vs-openshift/run.sh" --help >/dev/null
 
 log "Running loadgen-k8s tests"
 (
