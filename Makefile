@@ -7,12 +7,15 @@ EXPERIMENTS := \
 	grpc-vs-rest \
 	redis-vs-valkey \
 	clickhouse-vs-postgresql \
-	kafka-vs-rabbitmq
+	kafka-vs-rabbitmq \
+	nats-vs-kafka \
+	k8s-vs-openshift
 
 .PHONY: \
 	help \
 	list \
 	collect-results \
+	render-results \
 	validate \
 	smoke \
 	validate-all \
@@ -25,6 +28,7 @@ help:
 	@echo ""
 	@echo "  make list"
 	@echo "  make collect-results"
+	@echo "  make render-results"
 	@echo "  make validate-all"
 	@echo "  make smoke-all"
 	@echo "  make validate EXP=<experiment>"
@@ -38,6 +42,9 @@ list:
 
 collect-results:
 	bash "./scripts/collect-results.sh"
+
+render-results:
+	bash "./scripts/render-results.sh"
 
 validate:
 ifndef EXP

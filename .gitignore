@@ -1,4 +1,5 @@
 # Benchmark binaries
+.idea
 benchmarks/*/bin/
 benchmarks/loadgen-http/loadgen-http
 
@@ -22,3 +23,4 @@ experiments/orchestration/k8s-vs-openshift/results/*.json
 
 # k8s loadgen binary
 benchmarks/loadgen-k8s/loadgen-k8s
+/.idea/modules.xml

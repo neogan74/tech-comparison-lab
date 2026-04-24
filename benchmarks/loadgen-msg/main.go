@@ -10,18 +10,19 @@ import (
 	"time"
 
 	kafkabench "github.com/tech-comparison-lab/loadgen-msg/internal/kafka"
+	natsbench "github.com/tech-comparison-lab/loadgen-msg/internal/nats"
 	rabbitbench "github.com/tech-comparison-lab/loadgen-msg/internal/rabbit"
 	"github.com/tech-comparison-lab/loadgen-msg/internal/report"
 )
 
 func main() {
-	db := flag.String("db", "", "broker: kafka | rabbitmq (required)")
+	db := flag.String("db", "", "broker: kafka | rabbitmq | nats (required)")
 	op := flag.String("op", "all", "operation: produce|consume|all")
 	count := flag.Int("count", 1000000, "total messages")
 	batchSize := flag.Int("batch", 1000, "messages per batch write")
 	consumers := flag.Int("consumers", 3, "concurrent consumers")
-	addr := flag.String("addr", "", "broker address (or KAFKA_ADDR / RABBIT_ADDR env)")
-	topic := flag.String("topic", "bench", "Kafka topic / RabbitMQ queue name")
+	addr := flag.String("addr", "", "broker address (or KAFKA_ADDR / RABBIT_ADDR / NATS_ADDR env)")
+	topic := flag.String("topic", "bench", "Kafka topic / RabbitMQ queue name / NATS subject")
 	partitions := flag.Int("partitions", 3, "Kafka topic partitions")
 	out := flag.String("out", "", "write JSON results to file (optional)")
 	clean := flag.Bool("clean", false, "delete topic/queue before running")
@@ -29,11 +30,11 @@ func main() {
 	flag.Parse()
 
 	if *db == "" {
-		fmt.Fprintln(os.Stderr, "error: --db is required (kafka | rabbitmq)")
+		fmt.Fprintln(os.Stderr, "error: --db is required (kafka | rabbitmq | nats)")
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *db != "kafka" && *db != "rabbitmq" {
+	if *db != "kafka" && *db != "rabbitmq" && *db != "nats" {
 		fmt.Fprintf(os.Stderr, "error: unknown --db %q\n", *db)
 		os.Exit(1)
 	}
@@ -42,13 +43,14 @@ func main() {
 		os.Exit(1)
 	}
 	if *addr == "" {
-		envKey := map[string]string{"kafka": "KAFKA_ADDR", "rabbitmq": "RABBIT_ADDR"}[*db]
+		envKey := map[string]string{"kafka": "KAFKA_ADDR", "rabbitmq": "RABBIT_ADDR", "nats": "NATS_ADDR"}[*db]
 		*addr = os.Getenv(envKey)
 	}
 	if *addr == "" {
 		defaults := map[string]string{
 			"kafka":    "localhost:9093",
 			"rabbitmq": "amqp://bench:benchpass@localhost:5672/",
+			"nats":     "nats://localhost:4222",
 		}
 		*addr = defaults[*db]
 	}
@@ -61,6 +63,8 @@ func main() {
 		results = runKafka(ctx, *addr, *op, *count, *batchSize, *consumers, *partitions, *topic, *clean, *dryRun)
 	case "rabbitmq":
 		results = runRabbit(ctx, *addr, *op, *count, *batchSize, *consumers, *topic, *clean, *dryRun)
+	case "nats":
+		results = runNats(ctx, *addr, *op, *count, *batchSize, *consumers, *topic, *clean, *dryRun)
 	}
 
 	if len(results) > 0 {
@@ -89,7 +93,7 @@ func validateConfig(db, op string, count, batchSize, consumers, partitions int) 
 	if !validOps[op] {
 		return fmt.Errorf("unknown --op %q, want produce|consume|all", op)
 	}
-	if db != "kafka" && db != "rabbitmq" {
+	if db != "kafka" && db != "rabbitmq" && db != "nats" {
 		return fmt.Errorf("unknown --db %q", db)
 	}
 	if count < 1 {
@@ -222,6 +226,65 @@ func runRabbit(ctx context.Context, dsn, op string, count, batchSize, consumers 
 		}
 		results = append(results, r)
 		fmt.Printf("rabbitmq: consume done in %s (%d msgs total)\n", total.Round(time.Millisecond), stats.Total)
+	}
+
+	return results
+}
+
+func runNats(ctx context.Context, addr, op string, count, batchSize, consumers int, subject string, clean, dryRun bool) []report.Result {
+	stream := "bench-stream"
+	bench, err := natsbench.New(addr, stream, subject)
+	if err != nil {
+		log.Fatalf("nats connect: %v", err)
+	}
+	defer bench.Close()
+	fmt.Printf("nats: connected to %s\n", addr)
+
+	if dryRun {
+		fmt.Println("nats: dry-run OK")
+		return nil
+	}
+
+	if err := bench.CreateStream(ctx); err != nil {
+		log.Fatalf("nats CreateStream: %v", err)
+	}
+	if clean {
+		if err := bench.Purge(ctx); err != nil {
+			log.Fatalf("nats purge: %v", err)
+		}
+		fmt.Println("nats: stream purged")
+	}
+
+	var results []report.Result
+
+	if op == "produce" || op == "all" {
+		fmt.Printf("nats: producing %d messages (batch=%d)...\n", count, batchSize)
+		durs, total, err := bench.Produce(ctx, count, batchSize)
+		if err != nil {
+			log.Fatalf("nats produce: %v", err)
+		}
+		results = append(results, report.Compute("nats", "produce", count, batchSize, durs, total))
+		fmt.Printf("nats: produce done in %s\n", total.Round(time.Millisecond))
+	}
+
+	if op == "consume" || op == "all" {
+		fmt.Printf("nats: consuming %d messages (%d consumers)...\n", count, consumers)
+		stats, total, err := bench.Consume(ctx, count, consumers)
+		if err != nil {
+			log.Fatalf("nats consume: %v", err)
+		}
+		r := report.Compute("nats", "consume", stats.Total, 0, nil, total)
+		r.ThroughputOps = float64(stats.Total) / total.Seconds()
+		r.TotalMs = total.Milliseconds()
+		for i, n := range stats.PerConsumer {
+			qps := 0.0
+			if total > 0 {
+				qps = float64(n) / total.Seconds()
+			}
+			r.ConsumerStats = append(r.ConsumerStats, report.ConsumerStat{ID: i, Msgs: n, QPS: qps})
+		}
+		results = append(results, r)
+		fmt.Printf("nats: consume done in %s (%d msgs total)\n", total.Round(time.Millisecond), stats.Total)
 	}
 
 	return results

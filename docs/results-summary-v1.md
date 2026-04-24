@@ -9,6 +9,7 @@ The schema applies to merged summaries produced by experiment runners such as:
 - `experiments/cache/redis-vs-valkey/run.sh`
 - `experiments/analytics/clickhouse-vs-postgresql/run.sh`
 - `experiments/messaging/kafka-vs-rabbitmq/run.sh`
+- `experiments/orchestration/k8s-vs-openshift/run.sh`
 
 It does not replace the raw per-target JSON emitted directly by benchmark binaries.
 

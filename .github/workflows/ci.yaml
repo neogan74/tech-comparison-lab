@@ -217,8 +217,8 @@ jobs:
           SMOKE_COUNT: 5000
         run: bash ./scripts/smoke-kafka-vs-rabbitmq.sh
 
-  validate-clickhouse-vs-postgresql:
-    name: Validate ClickHouse vs PostgreSQL experiment
+  validate-nats-vs-kafka:
+    name: Validate NATS vs Kafka experiment
     runs-on: ubuntu-latest
 
     steps:
@@ -228,19 +228,19 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: benchmarks/loadgen-analytics/go.mod
+          go-version-file: benchmarks/loadgen-msg/go.mod
 
       - name: Verify Docker Compose availability
         run: docker compose version
 
       - name: Run validation script
-        run: bash ./scripts/validate-clickhouse-vs-postgresql.sh
+        run: bash ./scripts/validate-nats-vs-kafka.sh
 
-  smoke-clickhouse-vs-postgresql:
-    name: Smoke ClickHouse vs PostgreSQL experiment
+  smoke-nats-vs-kafka:
+    name: Smoke NATS vs Kafka experiment
     runs-on: ubuntu-latest
-    needs: validate-clickhouse-vs-postgresql
-    timeout-minutes: 30
+    needs: validate-nats-vs-kafka
+    timeout-minutes: 25
 
     steps:
       - name: Check out repository
@@ -249,10 +249,58 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: benchmarks/loadgen-analytics/go.mod
+          go-version-file: benchmarks/loadgen-msg/go.mod
 
       - name: Verify Docker Compose availability
         run: docker compose version
 
       - name: Run smoke benchmark
-        run: bash ./scripts/smoke-clickhouse-vs-postgresql.sh
+        env:
+          SMOKE_COUNT: 5000
+        run: bash ./scripts/smoke-nats-vs-kafka.sh
+
+  validate-k8s-vs-openshift:
+    name: Validate Kubernetes vs OpenShift experiment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-k8s/go.mod
+
+      - name: Verify Docker availability
+        run: docker version
+
+      - name: Run validation script
+        run: bash ./scripts/validate-k8s-vs-openshift.sh
+
+  smoke-k8s-vs-openshift:
+    name: Smoke Kubernetes vs OpenShift experiment
+    runs-on: ubuntu-latest
+    needs: validate-k8s-vs-openshift
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-k8s/go.mod
+
+      - name: Set up kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+
+      - name: Run smoke benchmark
+        env:
+          SMOKE_COUNT: 200
+          SMOKE_ROUNDS: 1
+          SMOKE_REPLICAS: 5
+        run: bash ./scripts/smoke-k8s-vs-openshift.sh

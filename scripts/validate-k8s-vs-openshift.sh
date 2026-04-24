@@ -1,9 +1,10 @@
+
 #!/usr/bin/env bash
 set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
-TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/validate-k8s-ocp.XXXXXX")
+TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/validate-k8s-openshift.XXXXXX")
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -12,7 +13,7 @@ cleanup() {
 trap cleanup EXIT
 
 log() {
-  echo "[validate-k8s-ocp] $*"
+  echo "[validate-k8s-openshift] $*"
 }
 
 log "Checking experiment runner syntax"

@@ -1,6 +1,6 @@
 {
   "schema_version": "results-index/v1",
-  "generated_at": "2026-04-07T10:05:58Z",
+  "generated_at": "2026-04-22T07:20:14Z",
   "count": 5,
   "experiments": [
     {
@@ -627,7 +627,7 @@
       "name": "Kafka vs RabbitMQ",
       "category": "messaging",
       "summary_file": "experiments/messaging/kafka-vs-rabbitmq/results/summary.json",
-      "timestamp": "2026-04-07T09:57:27Z",
+      "timestamp": "2026-04-22T07:17:38Z",
       "mode": "full",
       "result_count": 4,
       "summary": {
@@ -638,11 +638,11 @@
           "category": "messaging",
           "path": "experiments/messaging/kafka-vs-rabbitmq"
         },
-        "run_id": "kafka-1775555847",
-        "timestamp": "2026-04-07T09:57:27Z",
+        "run_id": "kafka-1776842258",
+        "timestamp": "2026-04-22T07:17:38Z",
         "mode": "full",
         "config": {
-          "msg_count": 1000000,
+          "msg_count": 100000,
           "batch_size": 1000,
           "consumers": 3,
           "partitions": 3
@@ -661,21 +661,21 @@
           {
             "db": "kafka",
             "op": "produce",
-            "count": 1000000,
+            "count": 100000,
             "batch": 1000,
-            "p50_ms": 70.8,
-            "p95_ms": 305.769,
-            "p99_ms": 944.53,
-            "min_ms": 13.283,
-            "max_ms": 1733.71,
-            "mean_ms": 115.09074000000001,
-            "throughput_msg_sec": 8615.320555837263,
-            "total_ms": 116072
+            "p50_ms": 9.467,
+            "p95_ms": 11.307,
+            "p99_ms": 13.409,
+            "min_ms": 7.881,
+            "max_ms": 18.155,
+            "mean_ms": 9.70218,
+            "throughput_msg_sec": 95836.51054925613,
+            "total_ms": 1043
           },
           {
             "db": "kafka",
             "op": "consume",
-            "count": 1000000,
+            "count": 100000,
             "batch": 0,
             "p50_ms": 0,
             "p95_ms": 0,
@@ -683,44 +683,44 @@
             "min_ms": 0,
             "max_ms": 0,
             "mean_ms": 0,
-            "throughput_msg_sec": 1433.0531592776558,
+            "throughput_msg_sec": 4649.60415515052,
             "consumer_stats": [
               {
                 "id": 0,
-                "msgs": 333333,
-                "qps": 477.68390874149884
+                "msgs": 33333,
+                "qps": 1549.8525530363227
               },
               {
                 "id": 1,
-                "msgs": 333334,
-                "qps": 477.68534179465814
+                "msgs": 33334,
+                "qps": 1549.899049077874
               },
               {
                 "id": 2,
-                "msgs": 333333,
-                "qps": 477.68390874149884
+                "msgs": 33333,
+                "qps": 1549.8525530363227
               }
             ],
-            "total_ms": 697810
+            "total_ms": 21507
           },
           {
             "db": "rabbitmq",
             "op": "produce",
-            "count": 1000000,
+            "count": 100000,
             "batch": 1000,
-            "p50_ms": 28.384,
-            "p95_ms": 75.356,
-            "p99_ms": 131.128,
-            "min_ms": 14.343,
-            "max_ms": 197.913,
-            "mean_ms": 33.931989,
-            "throughput_msg_sec": 29470.045875143387,
-            "total_ms": 33932
+            "p50_ms": 21.915,
+            "p95_ms": 61.931,
+            "p99_ms": 73.736,
+            "min_ms": 13.578,
+            "max_ms": 75.085,
+            "mean_ms": 25.645619999999997,
+            "throughput_msg_sec": 38991.96224564264,
+            "total_ms": 2564
           },
           {
             "db": "rabbitmq",
             "op": "consume",
-            "count": 1000000,
+            "count": 100000,
             "batch": 0,
             "p50_ms": 0,
             "p95_ms": 0,
@@ -728,25 +728,25 @@
             "min_ms": 0,
             "max_ms": 0,
             "mean_ms": 0,
-            "throughput_msg_sec": 75720.39437078033,
+            "throughput_msg_sec": 85310.53835748421,
             "consumer_stats": [
               {
                 "id": 0,
-                "msgs": 330500,
-                "qps": 25025.590339542898
+                "msgs": 38850,
+                "qps": 33143.14415188262
               },
               {
                 "id": 1,
-                "msgs": 334200,
-                "qps": 25305.755798714785
+                "msgs": 23250,
+                "qps": 19834.70016811508
               },
               {
                 "id": 2,
-                "msgs": 335300,
-                "qps": 25389.048232522644
+                "msgs": 37900,
+                "qps": 32332.69403748652
               }
             ],
-            "total_ms": 13206
+            "total_ms": 1172
           }
         ]
       }
