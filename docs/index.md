@@ -1,6 +1,6 @@
 # Benchmark Results
 
-Generated from `docs/index.json` at `2026-04-07T10:05:58Z`.
+Generated from `docs/index.json` at `2026-04-22T07:20:14Z`.
 
 ## Runs
 
@@ -10,7 +10,7 @@ Generated from `docs/index.json` at `2026-04-07T10:05:58Z`.
 | gRPC vs REST | `api` | `2026-04-04T08:53:52Z` | `full` | 6 | [report](experiments/grpc-vs-rest.md) |
 | Redis vs Valkey | `cache` | `2026-04-06T12:39:53Z` | `full` | 8 | [report](experiments/redis-vs-valkey.md) |
 | PostgreSQL vs MongoDB | `databases` | `2026-04-04T05:02:34Z` | `full` | 8 | [report](experiments/postgresql-vs-mongodb.md) |
-| Kafka vs RabbitMQ | `messaging` | `2026-04-07T09:57:27Z` | `full` | 4 | [report](experiments/kafka-vs-rabbitmq.md) |
+| Kafka vs RabbitMQ | `messaging` | `2026-04-22T07:17:38Z` | `full` | 4 | [report](experiments/kafka-vs-rabbitmq.md) |
 
 ## Snapshot
 
@@ -18,7 +18,7 @@ Generated from `docs/index.json` at `2026-04-07T10:05:58Z`.
 - **gRPC vs REST**: top throughput `grpc/get-user` = 49325.89
 - **Redis vs Valkey**: top throughput `valkey/pipeline-set` = 146142.18
 - **PostgreSQL vs MongoDB**: top throughput `mongo/insert` = 8053.32
-- **Kafka vs RabbitMQ**: top throughput `rabbitmq/consume` = 75720.39
+- **Kafka vs RabbitMQ**: top throughput `kafka/produce` = 95836.51
 
 ## Schemas
 

@@ -8,6 +8,7 @@
 - Redis vs Valkey
 - ClickHouse vs PostgreSQL
 - Kafka vs RabbitMQ
+- NATS vs Apache Kafka
 - Kubernetes vs OpenShift (kind)
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
@@ -38,7 +39,6 @@ The following experiments are planned but not yet implemented. Choose from this 
 
 **Messaging / Streaming:**
 - Apache Kafka vs Apache Pulsar — streaming comparison
-- NATS vs Apache Kafka — high throughput
 - RabbitMQ vs NATS — lightweight messaging
 
 **Kubernetes / Platform:**

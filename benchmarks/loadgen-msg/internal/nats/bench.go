@@ -116,7 +116,7 @@ type ConsumeStats struct {
 }
 
 // Consume reads count messages total across consumers goroutines.
-// Each consumer gets its own durable subscription for maximum throughput.
+// Each consumer gets its own independent JetStream pull consumer for maximum throughput.
 func (b *Bench) Consume(ctx context.Context, count, consumers int) (ConsumeStats, time.Duration, error) {
 	var totalConsumed atomic.Int64
 	perConsumer := make([]atomic.Int64, consumers)
@@ -133,7 +133,7 @@ func (b *Bench) Consume(ctx context.Context, count, consumers int) (ConsumeStats
 			defer wg.Done()
 
 			consName := fmt.Sprintf("consumer-%d-%d", id, time.Now().UnixNano())
-			_, err := b.js.CreateConsumer(ctx, b.stream, jetstream.ConsumerConfig{
+			cons, err := b.js.CreateConsumer(ctx, b.stream, jetstream.ConsumerConfig{
 				Name:          consName,
 				AckPolicy:     jetstream.AckExplicitPolicy,
 				FilterSubject: b.subj,
@@ -141,21 +141,30 @@ func (b *Bench) Consume(ctx context.Context, count, consumers int) (ConsumeStats
 			if err != nil {
 				return
 			}
-			defer b.js.DeleteConsumer(ctx, b.stream, consName)
+			defer b.js.DeleteConsumer(context.Background(), b.stream, consName)
 
-			sub, err := b.nc.Subscribe(b.subj, func(msg *nats.Msg) {
+			iter, err := cons.Messages()
+			if err != nil {
+				return
+			}
+			// Stop the iterator when context is cancelled so Next() unblocks.
+			go func() {
+				<-ctx.Done()
+				iter.Stop()
+			}()
+
+			for {
+				msg, err := iter.Next()
+				if err != nil {
+					return
+				}
 				msg.Ack()
 				perConsumer[id].Add(1)
 				if totalConsumed.Add(1) >= int64(count) {
 					cancel()
+					return
 				}
-			})
-			if err != nil {
-				return
 			}
-			defer sub.Unsubscribe()
-
-			<-ctx.Done()
 		}(i)
 	}
 	wg.Wait()

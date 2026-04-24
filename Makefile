@@ -8,6 +8,7 @@ EXPERIMENTS := \
 	redis-vs-valkey \
 	clickhouse-vs-postgresql \
 	kafka-vs-rabbitmq \
+	nats-vs-kafka \
 	k8s-vs-openshift
 
 .PHONY: \

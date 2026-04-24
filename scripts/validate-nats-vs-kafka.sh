@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+TMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/validate-nats-vs-kafka.XXXXXX")
+
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+
+trap cleanup EXIT
+
+log() {
+  echo "[validate-nats-vs-kafka] $*"
+}
+
+log "Checking experiment runner syntax"
+bash -n "$REPO_ROOT/experiments/messaging/nats-vs-kafka/run.sh"
+
+log "Checking experiment runner help output"
+"$REPO_ROOT/experiments/messaging/nats-vs-kafka/run.sh" --help >/dev/null
+
+log "Checking Docker Compose config"
+docker compose -f "$REPO_ROOT/deployments/docker-compose/nats-vs-kafka/docker-compose.yml" config --quiet
+
+log "Running loadgen-msg tests"
+(
+  cd "$REPO_ROOT/benchmarks/loadgen-msg"
+  GOCACHE="$TMP_DIR/go-build" go test ./...
+)
+
+log "Validation completed"
