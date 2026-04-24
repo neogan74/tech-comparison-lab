@@ -9,6 +9,7 @@ EXPERIMENTS := \
 	clickhouse-vs-postgresql \
 	kafka-vs-rabbitmq \
 	nats-vs-kafka \
+	rabbitmq-vs-nats \
 	k8s-vs-openshift
 
 .PHONY: \
