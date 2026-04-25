@@ -40,7 +40,11 @@ func BuildConfig(kubeconfig, kctx string) (*rest.Config, error) {
 }
 
 // NewClientset creates a new Kubernetes clientset from the given config.
+// Rate limiting is disabled (QPS=0) so the API latency benchmark measures
+// actual server latency, not client-side throttle delays.
 func NewClientset(cfg *rest.Config) (*kubernetes.Clientset, error) {
+	cfg.QPS = 0   // unlimited
+	cfg.Burst = 0 // unlimited
 	return kubernetes.NewForConfig(cfg)
 }
 
