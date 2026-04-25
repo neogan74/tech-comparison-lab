@@ -190,45 +190,83 @@ selected_replicas() {
 }
 
 render_summary() {
-  if [ ! -s "$RESULTS_DIR/k8s.json" ] || [ ! -s "$RESULTS_DIR/ocp.json" ]; then
+  if [ ! -s "$RESULTS_DIR/k8s.json" ]; then
     return
   fi
 
   if ! have_cmd jq; then
-    warn "jq not found — skipping side-by-side summary generation."
+    warn "jq not found — skipping summary generation."
     return
   fi
 
+  local has_ocp=false
+  [ -s "$RESULTS_DIR/ocp.json" ] && has_ocp=true
+
   echo ""
   echo "════════════════════════════════════════════════════════════════════════════════"
-  echo " Kubernetes vs OpenShift — side-by-side"
+  if $has_ocp; then
+    echo " Kubernetes vs OpenShift — side-by-side"
+  else
+    echo " Kubernetes (kind) — results"
+  fi
   echo "════════════════════════════════════════════════════════════════════════════════"
 
-  local k8s_type ocp_type latency_ops scalar_ops op k8s_p50 ocp_p50 k8s_val ocp_val
-  k8s_type=$(jq -r '.cluster_type' "$RESULTS_DIR/k8s.json")
-  ocp_type=$(jq -r '.cluster_type' "$RESULTS_DIR/ocp.json")
-  printf "%-35s  %12s  %12s\n" "Operation" "$k8s_type" "$ocp_type"
-  printf "%-35s  %12s  %12s\n" "───────────────────────────────────" "────────────" "────────────"
+  if $has_ocp; then
+    local k8s_type ocp_type latency_ops scalar_ops op k8s_p50 ocp_p50 k8s_val ocp_val
+    k8s_type=$(jq -r '.cluster_type' "$RESULTS_DIR/k8s.json")
+    ocp_type=$(jq -r '.cluster_type' "$RESULTS_DIR/ocp.json")
+    printf "%-35s  %12s  %12s\n" "Operation" "$k8s_type" "$ocp_type"
+    printf "%-35s  %12s  %12s\n" "───────────────────────────────────" "────────────" "────────────"
 
-  latency_ops=$(jq -r '.results[] | select(.p50_ms > 0) | .op' "$RESULTS_DIR/k8s.json" | sort -u)
-  for op in $latency_ops; do
-    k8s_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/k8s.json" | head -1 | xargs printf "%.2f ms")
-    ocp_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/ocp.json" | head -1 | xargs printf "%.2f ms")
-    printf "%-35s  %12s  %12s\n" "$op (p50)" "$k8s_p50" "$ocp_p50"
-  done
+    latency_ops=$(jq -r '.results[] | select(.p50_ms > 0) | .op' "$RESULTS_DIR/k8s.json" | sort -u)
+    for op in $latency_ops; do
+      k8s_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/k8s.json" | head -1 | xargs printf "%.2f ms")
+      ocp_p50=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | .p50_ms' "$RESULTS_DIR/ocp.json" | head -1 | xargs printf "%.2f ms")
+      printf "%-35s  %12s  %12s\n" "$op (p50)" "$k8s_p50" "$ocp_p50"
+    done
 
-  scalar_ops=$(jq -r '.results[] | select(.p50_ms == null or .p50_ms == 0) | .op' "$RESULTS_DIR/k8s.json" | sort -u)
-  for op in $scalar_ops; do
-    k8s_val=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/k8s.json" | head -1)
-    ocp_val=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/ocp.json" | head -1)
-    printf "%-35s  %12s  %12s\n" "$op" "$k8s_val" "$ocp_val"
-  done
-  echo "════════════════════════════════════════════════════════════════════════════════"
+    scalar_ops=$(jq -r '.results[] | select(.p50_ms == null or .p50_ms == 0) | .op' "$RESULTS_DIR/k8s.json" | sort -u)
+    for op in $scalar_ops; do
+      k8s_val=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/k8s.json" | head -1)
+      ocp_val=$(jq -r --arg op "$op" '.results[] | select(.op==$op) | "\(.value) \(.unit)"' "$RESULTS_DIR/ocp.json" | head -1)
+      printf "%-35s  %12s  %12s\n" "$op" "$k8s_val" "$ocp_val"
+    done
 
-  jq -s '
-    .[0] as $k8s
-    | .[1] as $ocp
-    | {
+    jq -s '
+      .[0] as $k8s
+      | .[1] as $ocp
+      | {
+          schema_version: "results-summary/v1",
+          experiment: {
+            id: "k8s-vs-openshift",
+            name: "Kubernetes vs OpenShift",
+            category: "orchestration",
+            path: "experiments/orchestration/k8s-vs-openshift"
+          },
+          run_id: ("k8s-vs-openshift-" + ($k8s.timestamp | tostring)),
+          timestamp: $k8s.timestamp,
+          mode: "full",
+          config: {
+            count: '"$(selected_count)"',
+            rounds: '"$(selected_rounds)"',
+            replicas: '"$(selected_replicas)"'
+          },
+          sources: [
+            {name: "k8s", file: "results/k8s.json"},
+            {name: "ocp", file: "results/ocp.json"}
+          ],
+          results: (
+            [ $k8s.results[] | . + {cluster: $k8s.cluster_type} ] +
+            [ $ocp.results[] | . + {cluster: $ocp.cluster_type} ]
+          ),
+          clusters: { k8s: $k8s, ocp: $ocp }
+        }
+    ' "$RESULTS_DIR/k8s.json" "$RESULTS_DIR/ocp.json" > "$RESULTS_DIR/summary.json"
+  else
+    # kind-only run: still produce a valid summary.json so collect-results.sh picks it up
+    warn "OCP_CONTEXT not set — generating kind-only summary."
+    jq '
+      {
         schema_version: "results-summary/v1",
         experiment: {
           id: "k8s-vs-openshift",
@@ -236,28 +274,34 @@ render_summary() {
           category: "orchestration",
           path: "experiments/orchestration/k8s-vs-openshift"
         },
-        run_id: ("k8s-vs-openshift-" + ($k8s.timestamp | tostring)),
-        timestamp: $k8s.timestamp,
-        mode: "full",
+        run_id: ("k8s-vs-openshift-" + (.timestamp | tostring)),
+        timestamp: .timestamp,
+        mode: "k8s-only",
         config: {
           count: '"$(selected_count)"',
           rounds: '"$(selected_rounds)"',
           replicas: '"$(selected_replicas)"'
         },
-        sources: [
-          {name: "k8s", file: "results/k8s.json"},
-          {name: "ocp", file: "results/ocp.json"}
-        ],
-        results: (
-          [ $k8s.results[] | . + {cluster: $k8s.cluster_type} ] +
-          [ $ocp.results[] | . + {cluster: $ocp.cluster_type} ]
-        ),
-        clusters: {
-          k8s: $k8s,
-          ocp: $ocp
-        }
+        sources: [{name: "k8s", file: "results/k8s.json"}],
+        results: [ .results[] | . + {cluster: .cluster_type} ]
       }
-  ' "$RESULTS_DIR/k8s.json" "$RESULTS_DIR/ocp.json" > "$RESULTS_DIR/summary.json"
+    ' "$RESULTS_DIR/k8s.json" > "$RESULTS_DIR/summary.json"
+
+    printf "%-35s  %12s\n" "Operation" "kubernetes"
+    printf "%-35s  %12s\n" "───────────────────────────────────" "────────────"
+    jq -r '.results[] | select(.p50_ms? and .p50_ms > 0) | "\(.op)\t\(.p50_ms)"' \
+      "$RESULTS_DIR/k8s.json" | \
+    while IFS=$'\t' read -r op p50; do
+      printf "%-35s  %12s\n" "$op (p50)" "$(printf '%.2f ms' "$p50")"
+    done
+    jq -r '.results[] | select(.value?) | "\(.op)\t\(.value) \(.unit)"' \
+      "$RESULTS_DIR/k8s.json" | \
+    while IFS=$'\t' read -r op val; do
+      printf "%-35s  %12s\n" "$op" "$val"
+    done
+  fi
+
+  echo "════════════════════════════════════════════════════════════════════════════════"
   info "Summary saved to $RESULTS_DIR/summary.json"
 }
 
