@@ -13,25 +13,21 @@ import (
 )
 
 func main() {
-	db := flag.String("db", "", "database: redis | valkey (required)")
+	db := flag.String("db", "", "database: redis | valkey | memcached (required)")
 	op := flag.String("op", "all", "operation: set|get|pipeline-set|pipeline-get|mixed|all")
 	count := flag.Int("count", 1000000, "total keys for set/pipeline-set; ignored for get/mixed (use --iterations)")
 	iterations := flag.Int("iterations", 100000, "iterations for get/pipeline-get/mixed")
-	pipeSize := flag.Int("pipe-size", 100, "commands per pipeline batch")
+	pipeSize := flag.Int("pipe-size", 100, "commands per pipeline batch (or multi-get batch for memcached)")
 	workers := flag.Int("workers", 16, "concurrent goroutines")
-	addr := flag.String("addr", "", "server address host:port (or REDIS_ADDR / VALKEY_ADDR env)")
+	addr := flag.String("addr", "", "server address host:port (or REDIS_ADDR / VALKEY_ADDR / MEMCACHED_ADDR env)")
 	out := flag.String("out", "", "write JSON results to this file (optional)")
-	flush := flag.Bool("flush", false, "FLUSHALL before running (WARNING: deletes all data)")
+	flush := flag.Bool("flush", false, "flush all data before running (WARNING: deletes all data)")
 	dryRun := flag.Bool("dry-run", false, "test connectivity only")
 	flag.Parse()
 
 	if *db == "" {
-		fmt.Fprintln(os.Stderr, "error: --db is required (redis | valkey)")
+		fmt.Fprintln(os.Stderr, "error: --db is required (redis | valkey | memcached)")
 		flag.Usage()
-		os.Exit(1)
-	}
-	if *db != "redis" && *db != "valkey" {
-		fmt.Fprintf(os.Stderr, "error: unknown --db %q\n", *db)
 		os.Exit(1)
 	}
 
@@ -45,11 +41,19 @@ func main() {
 	}
 
 	if *addr == "" {
-		envKey := map[string]string{"redis": "REDIS_ADDR", "valkey": "VALKEY_ADDR"}[*db]
+		envKey := map[string]string{
+			"redis":     "REDIS_ADDR",
+			"valkey":    "VALKEY_ADDR",
+			"memcached": "MEMCACHED_ADDR",
+		}[*db]
 		*addr = os.Getenv(envKey)
 	}
 	if *addr == "" {
-		defaults := map[string]string{"redis": "localhost:6379", "valkey": "localhost:6380"}
+		defaults := map[string]string{
+			"redis":     "localhost:6379",
+			"valkey":    "localhost:6380",
+			"memcached": "localhost:11211",
+		}
 		*addr = defaults[*db]
 	}
 
@@ -110,7 +114,8 @@ func validateConfig(db string, cfg runConfig) error {
 	if !validOps[cfg.op] {
 		return fmt.Errorf("unknown --op %q, want set|get|pipeline-set|pipeline-get|mixed|all", cfg.op)
 	}
-	if db != "redis" && db != "valkey" {
+	validDBs := map[string]bool{"redis": true, "valkey": true, "memcached": true}
+	if !validDBs[db] {
 		return fmt.Errorf("unknown --db %q", db)
 	}
 	if cfg.count < 1 {
@@ -128,7 +133,7 @@ func validateConfig(db string, cfg runConfig) error {
 	return nil
 }
 
-func run(ctx context.Context, bench *client.Bench, db string, cfg runConfig) []report.Result {
+func run(ctx context.Context, bench client.Client, db string, cfg runConfig) []report.Result {
 	var results []report.Result
 
 	// For "all": pipeline-set first (fills keys), then query ops
@@ -177,7 +182,7 @@ func run(ctx context.Context, bench *client.Bench, db string, cfg runConfig) []r
 
 	if runPipeGet {
 		totalCmds := cfg.iterations * cfg.pipeSize
-		fmt.Printf("%s: pipeline-get %d iterations × %d cmds (workers=%d)...\n",
+		fmt.Printf("%s: pipeline-get %d iterations x %d cmds (workers=%d)...\n",
 			db, cfg.iterations, cfg.pipeSize, cfg.workers)
 		durs, total, err := bench.PipelineGet(ctx, cfg.iterations, cfg.pipeSize, cfg.workers, cfg.count)
 		if err != nil {
@@ -190,7 +195,7 @@ func run(ctx context.Context, bench *client.Bench, db string, cfg runConfig) []r
 
 	if runMixed {
 		totalCmds := cfg.iterations * cfg.pipeSize
-		fmt.Printf("%s: mixed %d iterations × %d cmds 80%%GET/20%%SET (workers=%d)...\n",
+		fmt.Printf("%s: mixed %d iterations x %d cmds 80%%GET/20%%SET (workers=%d)...\n",
 			db, cfg.iterations, cfg.pipeSize, cfg.workers)
 		durs, total, err := bench.Mixed(ctx, cfg.iterations, cfg.pipeSize, cfg.workers, cfg.count)
 		if err != nil {

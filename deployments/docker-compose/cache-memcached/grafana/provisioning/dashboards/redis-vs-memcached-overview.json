@@ -1,0 +1,101 @@
+{
+  "title": "Redis vs Memcached Overview",
+  "uid": "redis-vs-memcached",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Redis Memory Used (bytes)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "redis_memory_used_bytes{instance=\"redis\"}",
+          "legendFormat": "Redis"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Memcached Memory Used (bytes)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "memcached_current_bytes{instance=\"memcached\"}",
+          "legendFormat": "Memcached"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Redis Commands/sec",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(redis_commands_total{instance=\"redis\"}[30s])",
+          "legendFormat": "{{cmd}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Memcached Commands/sec",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(memcached_commands_total{instance=\"memcached\"}[30s])",
+          "legendFormat": "{{command}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Redis Current Keys",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 16, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(redis_db_keys{instance=\"redis\"})",
+          "legendFormat": "Keys"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Memcached Current Items",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 16, "w": 6, "h": 4 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "memcached_current_items{instance=\"memcached\"}",
+          "legendFormat": "Items"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Memcached Hit Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(memcached_commands_total{command=\"get_hits\",instance=\"memcached\"}[30s]) / (rate(memcached_commands_total{command=\"get_hits\",instance=\"memcached\"}[30s]) + rate(memcached_commands_total{command=\"get_misses\",instance=\"memcached\"}[30s]))",
+          "legendFormat": "Hit Rate"
+        }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,7 @@
 - NATS vs Apache Kafka
 - RabbitMQ vs NATS
 - Kubernetes vs OpenShift (kind)
+- Redis vs Memcached
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
 
@@ -34,7 +35,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 - MongoDB vs Cassandra — distributed NoSQL
 
 **Cache / KV:**
-- Redis vs Memcached — cache performance
+- ~~Redis vs Memcached — cache performance~~ ✅
 - etcd vs Consul — KV store consensus
 - Redis vs Dragonfly — Redis alternative
 

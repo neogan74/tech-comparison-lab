@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: redis
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          instance: redis
+
+  - job_name: memcached
+    static_configs:
+      - targets: ["memcached-exporter:9150"]
+        labels:
+          instance: memcached
