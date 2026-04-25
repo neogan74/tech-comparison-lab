@@ -9,6 +9,7 @@
 - ClickHouse vs PostgreSQL
 - Kafka vs RabbitMQ
 - NATS vs Apache Kafka
+- RabbitMQ vs NATS
 - Kubernetes vs OpenShift (kind)
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
@@ -39,7 +40,6 @@ The following experiments are planned but not yet implemented. Choose from this 
 
 **Messaging / Streaming:**
 - Apache Kafka vs Apache Pulsar — streaming comparison
-- RabbitMQ vs NATS — lightweight messaging
 
 **Kubernetes / Platform:**
 - Kubernetes vs Nomad — scheduler comparison
