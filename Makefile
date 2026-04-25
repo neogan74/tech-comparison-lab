@@ -6,6 +6,7 @@ EXPERIMENTS := \
 	postgresql-vs-mongodb \
 	grpc-vs-rest \
 	redis-vs-valkey \
+	redis-vs-memcached \
 	clickhouse-vs-postgresql \
 	kafka-vs-rabbitmq \
 	nats-vs-kafka \

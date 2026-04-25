@@ -18,8 +18,8 @@ type Bench struct {
 	name string // "redis" or "valkey"
 }
 
-// New connects to addr and pings the server.
-func New(name, addr string) (*Bench, error) {
+// newRedisBench connects to addr and pings the server.
+func newRedisBench(name, addr string) (*Bench, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         addr,
 		PoolSize:     64,
