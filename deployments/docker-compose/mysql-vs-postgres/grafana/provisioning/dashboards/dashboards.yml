@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: tech-comparison-lab
+    orgId: 1
+    folder: Tech Comparison Lab
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards
