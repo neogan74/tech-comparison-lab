@@ -31,7 +31,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 
 **Databases:**
 - PostgreSQL vs CockroachDB — distributed SQL comparison
-- MySQL vs PostgreSQL — OLTP workloads
+- ~~MySQL vs PostgreSQL — OLTP workloads~~ ✅
 - MongoDB vs Cassandra — distributed NoSQL
 
 **Cache / KV:**
