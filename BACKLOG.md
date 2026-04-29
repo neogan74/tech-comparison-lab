@@ -34,7 +34,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 - ~~MySQL vs PostgreSQL — OLTP workloads~~ ✅
 - MongoDB vs Cassandra — distributed NoSQL
 
-**Cache / KV:**
+**Cache / KV:**continue
 - ~~Redis vs Memcached — cache performance~~ ✅
 - etcd vs Consul — KV store consensus
 - Redis vs Dragonfly — Redis alternative
