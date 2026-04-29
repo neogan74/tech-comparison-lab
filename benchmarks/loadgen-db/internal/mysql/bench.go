@@ -121,10 +121,11 @@ func (b *Bench) insertBatch(ctx context.Context, docs []gen.Order) error {
 	return err
 }
 
-// Query runs iterations of: SELECT id, doc FROM orders WHERE user.country = 'US' LIMIT 100
+// Query runs iterations of: SELECT id, doc FROM orders WHERE user_country = 'US' LIMIT 100
+// Uses the virtual generated column so the idx_orders_country index is applied.
 // Rows are fully iterated to include network + deserialization cost.
 func (b *Bench) Query(ctx context.Context, iterations int) ([]time.Duration, time.Duration, error) {
-	const q = `SELECT id, doc FROM orders WHERE doc->>'$.user.country' = 'US' LIMIT 100`
+	const q = `SELECT id, doc FROM orders WHERE user_country = 'US' LIMIT 100`
 	durs := make([]time.Duration, 0, iterations)
 	start := time.Now()
 	for i := 0; i < iterations; i++ {
@@ -184,11 +185,12 @@ func (b *Bench) Agg(ctx context.Context, iterations int) ([]time.Duration, time.
 }
 
 // Update runs iterations of: SET metadata.session = MD5(RAND()) WHERE country='US' LIMIT 1000
+// Uses the virtual generated column so the idx_orders_country index is applied.
 func (b *Bench) Update(ctx context.Context, iterations int) ([]time.Duration, time.Duration, error) {
 	const q = `
 		UPDATE orders
 		SET doc = JSON_SET(doc, '$.metadata.session', MD5(RAND()))
-		WHERE doc->>'$.user.country' = 'US'
+		WHERE user_country = 'US'
 		LIMIT 1000`
 	durs := make([]time.Duration, 0, iterations)
 	start := time.Now()
