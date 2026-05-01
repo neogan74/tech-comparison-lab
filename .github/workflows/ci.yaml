@@ -89,6 +89,48 @@ jobs:
           SMOKE_COUNT: 500
         run: bash ./scripts/smoke-mysql-vs-postgres.sh
 
+  validate-postgres-vs-cockroachdb:
+    name: Validate PostgreSQL vs CockroachDB experiment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-db/go.mod
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Run validation script
+        run: bash ./scripts/validate-postgres-vs-cockroachdb.sh
+
+  smoke-postgres-vs-cockroachdb:
+    name: Smoke PostgreSQL vs CockroachDB experiment
+    runs-on: ubuntu-latest
+    needs: validate-postgres-vs-cockroachdb
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-db/go.mod
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Run smoke benchmark
+        env:
+          SMOKE_COUNT: 500
+        run: bash ./scripts/smoke-postgres-vs-cockroachdb.sh
+
   validate-grpc-vs-rest:
     name: Validate gRPC vs REST experiment
     runs-on: ubuntu-latest

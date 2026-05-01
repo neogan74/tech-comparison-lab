@@ -30,7 +30,7 @@ All experiments have CI validation, smoke tests, and follow the established patt
 The following experiments are planned but not yet implemented. Choose from this list when starting new work:
 
 **Databases:**
-- PostgreSQL vs CockroachDB — distributed SQL comparison
+- ~~PostgreSQL vs CockroachDB — distributed SQL comparison~~ ✅
 - ~~MySQL vs PostgreSQL — OLTP workloads~~ ✅
 - MongoDB vs Cassandra — distributed NoSQL
 

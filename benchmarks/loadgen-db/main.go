@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	crdbench "github.com/tech-comparison-lab/loadgen-db/internal/cockroachdb"
 	mbench "github.com/tech-comparison-lab/loadgen-db/internal/mongo"
 	mybench "github.com/tech-comparison-lab/loadgen-db/internal/mysql"
 	pgbench "github.com/tech-comparison-lab/loadgen-db/internal/postgres"
@@ -15,7 +16,7 @@ import (
 )
 
 func main() {
-	db := flag.String("db", "", "database: postgres | mongo | mysql (required)")
+	db := flag.String("db", "", "database: postgres | mongo | mysql | cockroachdb (required)")
 	op := flag.String("op", "all", "operation: insert | query | agg | update | all")
 	count := flag.Int("count", 100000, "number of documents to insert")
 	queryIter := flag.Int("query-iter", 0, "query iterations (default: min(count,1000))")
@@ -34,8 +35,8 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *db != "postgres" && *db != "mongo" && *db != "mysql" {
-		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo or mysql\n", *db)
+	if *db != "postgres" && *db != "mongo" && *db != "mysql" && *db != "cockroachdb" {
+		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo or mysql or cockroachdb\n", *db)
 		os.Exit(1)
 	}
 
@@ -59,11 +60,13 @@ func main() {
 			*dsn = os.Getenv("MONGO_DSN")
 		case "mysql":
 			*dsn = os.Getenv("MYSQL_DSN")
+		case "cockroachdb":
+			*dsn = os.Getenv("CRDB_DSN")
 		}
 	}
 	if *dsn == "" {
 		fmt.Fprintf(os.Stderr, "error: --dsn not set and %s env var is empty\n",
-			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN", "mysql": "MYSQL_DSN"}[*db])
+			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN", "mysql": "MYSQL_DSN", "cockroachdb": "CRDB_DSN"}[*db])
 		os.Exit(1)
 	}
 
@@ -77,6 +80,8 @@ func main() {
 		results = runMongo(ctx, *dsn, cfg)
 	case "mysql":
 		results = runMySQL(ctx, *dsn, cfg)
+	case "cockroachdb":
+		results = runCockroachDB(ctx, *dsn, cfg)
 	}
 
 	if len(results) > 0 {
@@ -144,6 +149,13 @@ func validateConfig(db string, cfg runConfig) error {
 			"all":    true,
 		},
 		"mysql": {
+			"insert": true,
+			"query":  true,
+			"agg":    true,
+			"update": true,
+			"all":    true,
+		},
+		"cockroachdb": {
 			"insert": true,
 			"query":  true,
 			"agg":    true,
@@ -363,6 +375,68 @@ func runMySQL(ctx context.Context, dsn string, cfg runConfig) []report.Result {
 			log.Fatalf("mysql update: %v", err)
 		}
 		results = append(results, report.Compute("mysql", "update", cfg.updateIter, 1, durs, total))
+	}
+
+	return results
+}
+
+func runCockroachDB(ctx context.Context, dsn string, cfg runConfig) []report.Result {
+	bench, err := crdbench.New(ctx, dsn)
+	if err != nil {
+		log.Fatalf("cockroachdb connect: %v", err)
+	}
+	defer bench.Close()
+	fmt.Println("cockroachdb: connected OK")
+
+	if cfg.dryRun {
+		return nil
+	}
+	if cfg.truncate {
+		if err := bench.Truncate(ctx); err != nil {
+			log.Fatalf("cockroachdb truncate: %v", err)
+		}
+		fmt.Println("cockroachdb: truncated orders table")
+	}
+
+	var results []report.Result
+
+	if cfg.op == "insert" || cfg.op == "all" {
+		fmt.Printf("cockroachdb: insert %d docs (batch=%d workers=%d)...\n", cfg.count, cfg.batch, cfg.workers)
+		durs, total, err := bench.Insert(ctx, cfg.count, cfg.batch, cfg.workers)
+		if err != nil {
+			log.Fatalf("cockroachdb insert: %v", err)
+		}
+		r := report.Compute("cockroachdb", "insert", cfg.count, cfg.workers, durs, total)
+		r.StorageBytes, _ = bench.StorageSize(ctx)
+		results = append(results, r)
+		fmt.Printf("cockroachdb: insert done in %s\n", total.Round(time.Millisecond))
+	}
+
+	if cfg.op == "query" || cfg.op == "all" {
+		fmt.Printf("cockroachdb: query %d iterations...\n", cfg.queryIter)
+		durs, total, err := bench.Query(ctx, cfg.queryIter)
+		if err != nil {
+			log.Fatalf("cockroachdb query: %v", err)
+		}
+		results = append(results, report.Compute("cockroachdb", "query", cfg.queryIter, 1, durs, total))
+	}
+
+	if cfg.op == "agg" || cfg.op == "all" {
+		fmt.Printf("cockroachdb: agg %d iterations...\n", cfg.aggIter)
+		durs, total, err := bench.Agg(ctx, cfg.aggIter)
+		if err != nil {
+			log.Fatalf("cockroachdb agg: %v", err)
+		}
+		results = append(results, report.Compute("cockroachdb", "agg", cfg.aggIter, 1, durs, total))
+	}
+
+	if cfg.op == "update" || cfg.op == "all" {
+		fmt.Printf("cockroachdb: update %d iterations...\n", cfg.updateIter)
+		durs, total, err := bench.Update(ctx, cfg.updateIter)
+		if err != nil {
+			log.Fatalf("cockroachdb update: %v", err)
+		}
+		results = append(results, report.Compute("cockroachdb", "update", cfg.updateIter, 1, durs, total))
 	}
 
 	return results
