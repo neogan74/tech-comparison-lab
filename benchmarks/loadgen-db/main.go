@@ -9,12 +9,13 @@ import (
 	"time"
 
 	mbench "github.com/tech-comparison-lab/loadgen-db/internal/mongo"
+	mybench "github.com/tech-comparison-lab/loadgen-db/internal/mysql"
 	pgbench "github.com/tech-comparison-lab/loadgen-db/internal/postgres"
 	"github.com/tech-comparison-lab/loadgen-db/internal/report"
 )
 
 func main() {
-	db := flag.String("db", "", "database: postgres | mongo (required)")
+	db := flag.String("db", "", "database: postgres | mongo | mysql (required)")
 	op := flag.String("op", "all", "operation: insert | query | agg | update | all")
 	count := flag.Int("count", 100000, "number of documents to insert")
 	queryIter := flag.Int("query-iter", 0, "query iterations (default: min(count,1000))")
@@ -29,12 +30,12 @@ func main() {
 	flag.Parse()
 
 	if *db == "" {
-		fmt.Fprintln(os.Stderr, "error: --db is required (postgres | mongo)")
+		fmt.Fprintln(os.Stderr, "error: --db is required (postgres | mongo | mysql)")
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *db != "postgres" && *db != "mongo" {
-		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo\n", *db)
+	if *db != "postgres" && *db != "mongo" && *db != "mysql" {
+		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo or mysql\n", *db)
 		os.Exit(1)
 	}
 
@@ -56,11 +57,13 @@ func main() {
 			*dsn = os.Getenv("PG_DSN")
 		case "mongo":
 			*dsn = os.Getenv("MONGO_DSN")
+		case "mysql":
+			*dsn = os.Getenv("MYSQL_DSN")
 		}
 	}
 	if *dsn == "" {
 		fmt.Fprintf(os.Stderr, "error: --dsn not set and %s env var is empty\n",
-			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN"}[*db])
+			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN", "mysql": "MYSQL_DSN"}[*db])
 		os.Exit(1)
 	}
 
@@ -72,6 +75,8 @@ func main() {
 		results = runPostgres(ctx, *dsn, cfg)
 	case "mongo":
 		results = runMongo(ctx, *dsn, cfg)
+	case "mysql":
+		results = runMySQL(ctx, *dsn, cfg)
 	}
 
 	if len(results) > 0 {
@@ -132,6 +137,13 @@ func validateConfig(db string, cfg runConfig) error {
 			"all":    true,
 		},
 		"mongo": {
+			"insert": true,
+			"query":  true,
+			"agg":    true,
+			"update": true,
+			"all":    true,
+		},
+		"mysql": {
 			"insert": true,
 			"query":  true,
 			"agg":    true,
@@ -289,6 +301,68 @@ func runMongo(ctx context.Context, dsn string, cfg runConfig) []report.Result {
 			log.Fatalf("mongo update: %v", err)
 		}
 		results = append(results, report.Compute("mongo", "update", cfg.updateIter, 1, durs, total))
+	}
+
+	return results
+}
+
+func runMySQL(ctx context.Context, dsn string, cfg runConfig) []report.Result {
+	bench, err := mybench.New(ctx, dsn)
+	if err != nil {
+		log.Fatalf("mysql connect: %v", err)
+	}
+	defer bench.Close()
+	fmt.Println("mysql: connected OK")
+
+	if cfg.dryRun {
+		return nil
+	}
+	if cfg.truncate {
+		if err := bench.Truncate(ctx); err != nil {
+			log.Fatalf("mysql truncate: %v", err)
+		}
+		fmt.Println("mysql: truncated orders table")
+	}
+
+	var results []report.Result
+
+	if cfg.op == "insert" || cfg.op == "all" {
+		fmt.Printf("mysql: insert %d docs (batch=%d workers=%d)...\n", cfg.count, cfg.batch, cfg.workers)
+		durs, total, err := bench.Insert(ctx, cfg.count, cfg.batch, cfg.workers)
+		if err != nil {
+			log.Fatalf("mysql insert: %v", err)
+		}
+		r := report.Compute("mysql", "insert", cfg.count, cfg.workers, durs, total)
+		r.StorageBytes, _ = bench.StorageSize(ctx)
+		results = append(results, r)
+		fmt.Printf("mysql: insert done in %s\n", total.Round(time.Millisecond))
+	}
+
+	if cfg.op == "query" || cfg.op == "all" {
+		fmt.Printf("mysql: query %d iterations...\n", cfg.queryIter)
+		durs, total, err := bench.Query(ctx, cfg.queryIter)
+		if err != nil {
+			log.Fatalf("mysql query: %v", err)
+		}
+		results = append(results, report.Compute("mysql", "query", cfg.queryIter, 1, durs, total))
+	}
+
+	if cfg.op == "agg" || cfg.op == "all" {
+		fmt.Printf("mysql: agg %d iterations...\n", cfg.aggIter)
+		durs, total, err := bench.Agg(ctx, cfg.aggIter)
+		if err != nil {
+			log.Fatalf("mysql agg: %v", err)
+		}
+		results = append(results, report.Compute("mysql", "agg", cfg.aggIter, 1, durs, total))
+	}
+
+	if cfg.op == "update" || cfg.op == "all" {
+		fmt.Printf("mysql: update %d iterations...\n", cfg.updateIter)
+		durs, total, err := bench.Update(ctx, cfg.updateIter)
+		if err != nil {
+			log.Fatalf("mysql update: %v", err)
+		}
+		results = append(results, report.Compute("mysql", "update", cfg.updateIter, 1, durs, total))
 	}
 
 	return results

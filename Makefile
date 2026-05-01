@@ -4,6 +4,7 @@ SHELL := /usr/bin/env bash
 
 EXPERIMENTS := \
 	postgresql-vs-mongodb \
+	mysql-vs-postgres \
 	grpc-vs-rest \
 	redis-vs-valkey \
 	redis-vs-memcached \
