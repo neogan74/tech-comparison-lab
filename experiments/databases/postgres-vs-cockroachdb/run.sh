@@ -132,12 +132,10 @@ wait_for_postgres() {
 }
 
 wait_for_cockroachdb() {
-  log "Waiting for CockroachDB..."
-  local max=48 i=0 cid status  # 48 × 5s = 240s
-  until cid=$(docker compose -f "$COMPOSE_DIR/docker-compose.yml" ps -q cockroachdb 2>/dev/null) \
-        && [ -n "$cid" ] \
-        && status=$(docker inspect --format='{{.State.Health.Status}}' "$cid" 2>/dev/null) \
-        && [ "$status" = "healthy" ]; do
+  log "Waiting for CockroachDB (port 26257)..."
+  local max=48 i=0  # 48 × 5s = 240s
+  until docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T cockroachdb \
+      cockroach sql --insecure --execute "SELECT 1" &>/dev/null; do
     i=$((i+1))
     [ $i -ge $max ] && { echo "error: CockroachDB not ready after 240s" >&2; exit 1; }
     sleep 5
