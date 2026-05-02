@@ -19,19 +19,12 @@ services:
 
   cockroachdb:
     image: cockroachdb/cockroach:latest
-    command: start-single-node --insecure --advertise-addr=cockroachdb --listen-addr=0.0.0.0:26257 --http-addr=0.0.0.0:8080
+    command: start-single-node --insecure --listen-addr=0.0.0.0:26257 --http-addr=0.0.0.0:8080 --store=type=mem,size=512MiB
     ports:
       - "26257:26257"
       - "8080:8080"
     volumes:
-      - crdb_data:/cockroach/cockroach-data
       - ./cockroachdb/init.sql:/cockroach/init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "cockroach sql --insecure --host=localhost --port=26257 --execute 'SELECT 1' 2>/dev/null || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 30
-      start_period: 30s
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
@@ -66,4 +59,3 @@ services:
 
 volumes:
   pg_data:
-  crdb_data:

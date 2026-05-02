@@ -137,7 +137,12 @@ wait_for_cockroachdb() {
   until docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T cockroachdb \
       cockroach sql --insecure --execute "SELECT 1" &>/dev/null; do
     i=$((i+1))
-    [ $i -ge $max ] && { echo "error: CockroachDB not ready after 240s" >&2; exit 1; }
+    if [ $i -ge $max ]; then
+      log "CockroachDB container logs (last 30 lines):"
+      docker compose -f "$COMPOSE_DIR/docker-compose.yml" logs --tail=30 cockroachdb || true
+      echo "error: CockroachDB not ready after 240s" >&2
+      exit 1
+    fi
     sleep 5
   done
   log "CockroachDB ready."
