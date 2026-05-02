@@ -19,7 +19,12 @@ services:
 
   cockroachdb:
     image: cockroachdb/cockroach:latest
-    command: start-single-node --insecure --listen-addr=0.0.0.0:26257 --http-addr=0.0.0.0:8080 --store=type=mem,size=512MiB
+    command: >
+      start-single-node --insecure
+      --listen-addr=127.0.0.1:26257
+      --sql-addr=0.0.0.0:26257
+      --http-addr=0.0.0.0:8080
+      --store=type=mem,size=1GiB
     ports:
       - "26257:26257"
       - "8080:8080"

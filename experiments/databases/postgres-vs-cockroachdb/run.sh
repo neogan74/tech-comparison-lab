@@ -134,8 +134,11 @@ wait_for_postgres() {
 wait_for_cockroachdb() {
   log "Waiting for CockroachDB (port 26257)..."
   local max=48 i=0  # 48 × 5s = 240s
-  until docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T cockroachdb \
-      cockroach sql --insecure --execute "SELECT 1" &>/dev/null; do
+  # Use the benchmark binary itself (pgx over PG wire) against defaultdb which
+  # always exists — avoids docker exec and confirms the SQL interface is usable.
+  until "$BINARY" --db cockroachdb \
+      --dsn "postgresql://root@localhost:26257/defaultdb?sslmode=disable" \
+      --dry-run &>/dev/null; do
     i=$((i+1))
     if [ $i -ge $max ]; then
       log "CockroachDB container logs (last 30 lines):"
@@ -150,11 +153,12 @@ wait_for_cockroachdb() {
 
 init_cockroachdb() {
   log "Initializing CockroachDB database and schema..."
-  docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T cockroachdb \
-    cockroach sql --insecure --execute "CREATE DATABASE IF NOT EXISTS bench;"
-  docker compose -f "$COMPOSE_DIR/docker-compose.yml" exec -T cockroachdb \
-    cockroach sql --insecure --database bench \
-    --file /cockroach/init.sql
+  # psql uses PG wire protocol — CockroachDB is compatible and psql is
+  # available on Ubuntu (GitHub Actions) without docker exec.
+  psql "postgresql://root@localhost:26257/defaultdb?sslmode=disable" \
+    -c "CREATE DATABASE IF NOT EXISTS bench;"
+  psql "postgresql://root@localhost:26257/bench?sslmode=disable" \
+    -f "$COMPOSE_DIR/cockroachdb/init.sql"
   log "CockroachDB schema ready."
 }
 
