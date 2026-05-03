@@ -12,6 +12,7 @@ func newRESTMux() http.Handler {
 	mux.HandleFunc("GET /echo", instrumentREST("echo", echoHandler))
 	mux.HandleFunc("GET /users/{id}", instrumentREST("get-user", getUserHandler))
 	mux.HandleFunc("POST /orders", instrumentREST("create-order", createOrderHandler))
+	mux.HandleFunc("POST /graphql", instrumentGraphQL("request", graphqlHandler))
 	return mux
 }
 

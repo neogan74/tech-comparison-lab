@@ -7,6 +7,7 @@ EXPERIMENTS := \
 	mysql-vs-postgres \
 	postgres-vs-cockroachdb \
 	grpc-vs-rest \
+	graphql-vs-rest \
 	redis-vs-valkey \
 	redis-vs-memcached \
 	clickhouse-vs-postgresql \
