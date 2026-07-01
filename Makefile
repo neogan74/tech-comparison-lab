@@ -14,7 +14,8 @@ EXPERIMENTS := \
 	kafka-vs-rabbitmq \
 	nats-vs-kafka \
 	rabbitmq-vs-nats \
-	k8s-vs-openshift
+	k8s-vs-openshift \
+	etcd-vs-consul
 
 .PHONY: \
 	help \

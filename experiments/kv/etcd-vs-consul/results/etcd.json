@@ -1,0 +1,76 @@
+{
+  "run_id": "etcd-1782926757",
+  "timestamp": "2026-07-01T17:25:57Z",
+  "results": [
+    {
+      "db": "etcd",
+      "op": "write",
+      "count": 10000,
+      "workers": 8,
+      "p50_ms": 1.404,
+      "p95_ms": 4.388,
+      "p99_ms": 6.369,
+      "min_ms": 0.706,
+      "max_ms": 124.253,
+      "mean_ms": 2.0001767999999998,
+      "throughput_ops_sec": 3993.197056919689,
+      "total_ms": 2504
+    },
+    {
+      "db": "etcd",
+      "op": "read",
+      "count": 10000,
+      "workers": 8,
+      "p50_ms": 0.231,
+      "p95_ms": 0.443,
+      "p99_ms": 0.779,
+      "min_ms": 0.095,
+      "max_ms": 2.854,
+      "mean_ms": 0.2652056,
+      "throughput_ops_sec": 30066.22461799922,
+      "total_ms": 332
+    },
+    {
+      "db": "etcd",
+      "op": "mixed",
+      "count": 10000,
+      "workers": 8,
+      "p50_ms": 1.379,
+      "p95_ms": 2.983,
+      "p99_ms": 4.382,
+      "min_ms": 0.128,
+      "max_ms": 8.577,
+      "mean_ms": 1.4215364,
+      "throughput_ops_sec": 5623.278836303068,
+      "total_ms": 1778
+    },
+    {
+      "db": "etcd",
+      "op": "watch",
+      "count": 100,
+      "workers": 1,
+      "p50_ms": 0.898,
+      "p95_ms": 2.059,
+      "p99_ms": 4.115,
+      "min_ms": 0.671,
+      "max_ms": 4.129,
+      "mean_ms": 1.12393,
+      "throughput_ops_sec": 680.992283662814,
+      "total_ms": 146
+    },
+    {
+      "db": "etcd",
+      "op": "election",
+      "count": 20,
+      "workers": 1,
+      "p50_ms": 1.061,
+      "p95_ms": 1.615,
+      "p99_ms": 1.635,
+      "min_ms": 0.962,
+      "max_ms": 1.635,
+      "mean_ms": 1.1569500000000001,
+      "throughput_ops_sec": 181.28305401905075,
+      "total_ms": 110
+    }
+  ]
+}
