@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	mrand "math/rand"
 	"net/http"
 	"sync"
@@ -78,6 +79,7 @@ func (b *Bench) post(ctx context.Context, req gqlRequest) error {
 	if err != nil {
 		return err
 	}
+	io.Copy(io.Discard, resp.Body) //nolint:errcheck // drain to allow connection reuse
 	resp.Body.Close()
 	return nil
 }

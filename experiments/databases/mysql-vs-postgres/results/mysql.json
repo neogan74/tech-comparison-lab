@@ -1,0 +1,63 @@
+{
+  "run_id": "mysql-1778940099",
+  "timestamp": "2026-05-16T14:01:39Z",
+  "results": [
+    {
+      "db": "mysql",
+      "op": "insert",
+      "count": 10000000,
+      "workers": 8,
+      "p50_ms": 8978.16,
+      "p95_ms": 17352.118,
+      "p99_ms": 29894.494,
+      "min_ms": 117.064,
+      "max_ms": 234109.493,
+      "mean_ms": 9914.4540791,
+      "throughput_ops_sec": 806.7170919585567,
+      "storage_bytes": 81920,
+      "total_ms": 12395919
+    },
+    {
+      "db": "mysql",
+      "op": "query",
+      "count": 1000,
+      "workers": 1,
+      "p50_ms": 1.012,
+      "p95_ms": 3.736,
+      "p99_ms": 6.621,
+      "min_ms": 0.632,
+      "max_ms": 97.776,
+      "mean_ms": 1.566676,
+      "throughput_ops_sec": 638.0176027461554,
+      "total_ms": 1567
+    },
+    {
+      "db": "mysql",
+      "op": "agg",
+      "count": 10,
+      "workers": 1,
+      "p50_ms": 233253.122,
+      "p95_ms": 516056.693,
+      "p99_ms": 516056.693,
+      "min_ms": 185374.073,
+      "max_ms": 516056.693,
+      "mean_ms": 257646.5564,
+      "throughput_ops_sec": 0.0038812860084496146,
+      "total_ms": 2576465
+    },
+    {
+      "db": "mysql",
+      "op": "update",
+      "count": 100,
+      "workers": 1,
+      "p50_ms": 48.206,
+      "p95_ms": 147.134,
+      "p99_ms": 191.75,
+      "min_ms": 34.409,
+      "max_ms": 429.234,
+      "mean_ms": 64.708,
+      "throughput_ops_sec": 15.453831908979401,
+      "total_ms": 6470
+    }
+  ]
+}
