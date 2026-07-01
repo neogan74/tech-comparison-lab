@@ -68,6 +68,26 @@ func instrumentREST(operation string, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func instrumentGraphQL(operation string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		inFlightRequests.WithLabelValues("graphql", operation).Inc()
+		defer inFlightRequests.WithLabelValues("graphql", operation).Dec()
+
+		rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+		next(rec, r)
+
+		statusText := http.StatusText(rec.statusCode)
+		if statusText == "" {
+			statusText = "UNKNOWN"
+		}
+		statusText = strings.ToLower(statusText)
+
+		requestsTotal.WithLabelValues("graphql", operation, statusText).Inc()
+		requestDuration.WithLabelValues("graphql", operation).Observe(time.Since(start).Seconds())
+	}
+}
+
 func grpcMetricsInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,

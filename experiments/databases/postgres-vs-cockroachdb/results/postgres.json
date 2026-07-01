@@ -1,0 +1,63 @@
+{
+  "run_id": "postgres-1777719726",
+  "timestamp": "2026-05-02T11:02:06Z",
+  "results": [
+    {
+      "db": "postgres",
+      "op": "insert",
+      "count": 10000000,
+      "workers": 8,
+      "p50_ms": 854.872,
+      "p95_ms": 5245.067,
+      "p99_ms": 8921.685,
+      "min_ms": 174.96,
+      "max_ms": 1673359.654,
+      "mean_ms": 1747.0524202000001,
+      "throughput_ops_sec": 4578.906885064157,
+      "storage_bytes": 20950859776,
+      "total_ms": 2183927
+    },
+    {
+      "db": "postgres",
+      "op": "query",
+      "count": 1000,
+      "workers": 1,
+      "p50_ms": 0.875,
+      "p95_ms": 2.204,
+      "p99_ms": 5.183,
+      "min_ms": 0.474,
+      "max_ms": 20.582,
+      "mean_ms": 1.0787660000000001,
+      "throughput_ops_sec": 926.4809566471766,
+      "total_ms": 1079
+    },
+    {
+      "db": "postgres",
+      "op": "agg",
+      "count": 10,
+      "workers": 1,
+      "p50_ms": 84443.387,
+      "p95_ms": 226385.69,
+      "p99_ms": 226385.69,
+      "min_ms": 73356.275,
+      "max_ms": 226385.69,
+      "mean_ms": 105248.3255,
+      "throughput_ops_sec": 0.009501334026919843,
+      "total_ms": 1052483
+    },
+    {
+      "db": "postgres",
+      "op": "update",
+      "count": 100,
+      "workers": 1,
+      "p50_ms": 147.747,
+      "p95_ms": 822.257,
+      "p99_ms": 1385.106,
+      "min_ms": 98.129,
+      "max_ms": 1848.02,
+      "mean_ms": 238.70328,
+      "throughput_ops_sec": 4.189285323499155,
+      "total_ms": 23870
+    }
+  ]
+}

@@ -50,7 +50,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 - Traefik vs NGINX — reverse proxy
 
 **API / Networking:**
-- GraphQL vs REST — API query models
+- ~~GraphQL vs REST — API query models~~ ✅
 - Kong vs Traefik — API gateway
 
 **Definition of Done for New Experiments:**
