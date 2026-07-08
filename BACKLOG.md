@@ -45,7 +45,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 **Kubernetes / Platform:**
 - Kubernetes vs Nomad — scheduler comparison
 - Kubernetes vs Docker Swarm — orchestration
-- Argo CD vs Flux CD — GitOps comparison
+- ~~Argo CD vs Flux CD — GitOps comparison~~ ✅
 - Istio vs Linkerd — service mesh
 - Traefik vs NGINX — reverse proxy
 

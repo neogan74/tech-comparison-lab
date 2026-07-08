@@ -15,7 +15,8 @@ EXPERIMENTS := \
 	nats-vs-kafka \
 	rabbitmq-vs-nats \
 	k8s-vs-openshift \
-	etcd-vs-consul
+	etcd-vs-consul \
+	argocd-vs-fluxcd
 
 .PHONY: \
 	help \
