@@ -17,6 +17,7 @@ import (
 func main() {
 	tool        := flag.String("tool", "", "gitops tool: argocd|flux (required)")
 	op          := flag.String("op", "all", "operation: sync-latency|reconcile|bulk|all")
+	workload    := flag.String("workload", "configmap", "resource type: configmap|deployment|mixed")
 	count       := flag.Int("count", 20, "iterations for sync-latency and reconcile")
 	bulkSize    := flag.Int("bulk-size", 10, "resources pushed in a single bulk commit")
 	kubeconfig  := flag.String("kubeconfig", "", "path to kubeconfig (default: ~/.kube/config)")
@@ -52,11 +53,6 @@ func main() {
 	}
 
 	gc := gitea.NewClient(*giteaURL, *giteaUser, *giteaToken, *giteaPass)
-	kc, err := k8s.NewClient(*kubeconfig, *kctx)
-	if err != nil {
-		log.Fatalf("k8s: %v", err)
-	}
-
 	ctx := context.Background()
 
 	if *dryRun {
@@ -66,6 +62,10 @@ func main() {
 		}
 		fmt.Printf("gitea: ok (%s)\n", *giteaURL)
 		fmt.Println("k8s: testing connectivity...")
+		kc, err := k8s.NewClient(*kubeconfig, *kctx)
+		if err != nil {
+			log.Fatalf("k8s: %v", err)
+		}
 		if err := kc.Ping(ctx); err != nil {
 			log.Fatalf("k8s ping: %v", err)
 		}
@@ -73,8 +73,14 @@ func main() {
 		return
 	}
 
+	kc, err := k8s.NewClient(*kubeconfig, *kctx)
+	if err != nil {
+		log.Fatalf("k8s: %v", err)
+	}
+
 	cfg := bench.Config{
 		Tool:        *tool,
+		Workload:    *workload,
 		Count:       *count,
 		BulkSize:    *bulkSize,
 		Namespace:   *namespace,

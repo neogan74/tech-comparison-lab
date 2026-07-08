@@ -1,0 +1,29 @@
+No default config file available
+Potential override file searchFile="/Users/neogan/Library/Application Support/cluster-api/overrides/infrastructure-docker/v1.13.3/cluster-template.yaml" provider="infrastructure-docker" version="v1.13.3"
+Fetching file="cluster-template.yaml" provider="docker" type="InfrastructureProvider" version="v1.13.3"
+error using httpGet to get file from GitHub releases, falling back to github client: 404 Not Found owner="kubernetes-sigs" repository="cluster-api" version="v1.13.3" path="cluster-template.yaml"
+Error: failed to read "cluster-template.yaml" from provider's repository "infrastructure-docker": failed to download files from GitHub release v1.13.3: failed to get file "cluster-template.yaml" from "v1.13.3" release
+sigs.k8s.io/cluster-api/cmd/clusterctl/client/repository.(*templateClient).Get
+	sigs.k8s.io/cluster-api/cmd/clusterctl/client/repository/template_client.go:96
+sigs.k8s.io/cluster-api/cmd/clusterctl/client.(*clusterctlClient).getTemplateFromRepository
+	sigs.k8s.io/cluster-api/cmd/clusterctl/client/config.go:340
+sigs.k8s.io/cluster-api/cmd/clusterctl/client.(*clusterctlClient).GetClusterTemplate
+	sigs.k8s.io/cluster-api/cmd/clusterctl/client/config.go:257
+sigs.k8s.io/cluster-api/cmd/clusterctl/cmd.runGenerateClusterTemplate
+	sigs.k8s.io/cluster-api/cmd/clusterctl/cmd/generate_cluster.go:194
+sigs.k8s.io/cluster-api/cmd/clusterctl/cmd.init.func9
+	sigs.k8s.io/cluster-api/cmd/clusterctl/cmd/generate_cluster.go:103
+github.com/spf13/cobra.(*Command).execute
+	github.com/spf13/cobra@v1.10.2/command.go:1015
+github.com/spf13/cobra.(*Command).ExecuteC
+	github.com/spf13/cobra@v1.10.2/command.go:1148
+github.com/spf13/cobra.(*Command).Execute
+	github.com/spf13/cobra@v1.10.2/command.go:1071
+sigs.k8s.io/cluster-api/cmd/clusterctl/cmd.Execute
+	sigs.k8s.io/cluster-api/cmd/clusterctl/cmd/root.go:113
+main.main
+	sigs.k8s.io/cluster-api/cmd/clusterctl/main.go:27
+runtime.main
+	runtime/proc.go:290
+runtime.goexit
+	runtime/asm_arm64.s:1447

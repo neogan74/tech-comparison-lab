@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Experiment: Argo CD vs Flux CD — GitOps sync latency benchmark
-# Usage: ./run.sh [--clean] [--smoke-only] [--keep-cluster]
+# Usage: ./run.sh [--clean] [--smoke-only] [--keep-cluster] [--expose-ui]
 #
 # Environment overrides:
 #   COUNT             (default: 20)
@@ -40,6 +40,10 @@ SKIP_BUILD="${SKIP_BUILD:-false}"
 CLEAN=false
 SMOKE_ONLY=false
 KEEP_CLUSTER="${KEEP_CLUSTER:-0}"
+KEEP_TOOLS=false
+EXPOSE_UI=false
+WORKLOAD="${WORKLOAD:-configmap}"
+ARGOCD_PF_PID=""
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 log()  { echo -e "${GREEN}[run]${NC} $*"; }
@@ -53,9 +57,12 @@ selected_bulk_size() { [ "$SMOKE_ONLY" = true ] && echo "$SMOKE_BULK_SIZE" || ec
 
 for arg in "$@"; do
   case "$arg" in
-    --clean)       CLEAN=true ;;
-    --smoke-only)  SMOKE_ONLY=true ;;
+    --clean)        CLEAN=true ;;
+    --smoke-only)   SMOKE_ONLY=true ;;
     --keep-cluster) KEEP_CLUSTER=1 ;;
+    --keep-tools)   KEEP_TOOLS=true; KEEP_CLUSTER=1 ;;
+    --expose-ui)    EXPOSE_UI=true ;;
+    --workload=*)   WORKLOAD="${arg#--workload=}" ;;
     -h|--help)
       cat <<'EOF'
 Usage: ./run.sh [--clean] [--smoke-only] [--keep-cluster]
@@ -64,6 +71,12 @@ Options:
   --clean          remove existing kind cluster and Gitea volumes before run
   --smoke-only     run a fast smoke pass (SMOKE_COUNT iterations each tool)
   --keep-cluster   leave the kind cluster running after the run
+  --expose-ui      port-forward Argo CD UI to https://localhost:8080 during ArgoCD benchmark;
+                   stream Flux controller logs + start Capacitor UI (http://localhost:3333)
+                   during the Flux benchmark if 'capacitor' binary is installed
+  --keep-tools     do not uninstall Argo CD or Flux after the benchmark (implies --keep-cluster);
+                   prints connection instructions so you can inspect the cluster state
+  --workload=TYPE  resource type to push: configmap (default) | deployment | mixed
 
 Environment overrides:
   COUNT             full benchmark iterations (default: 20)
@@ -144,7 +157,7 @@ wait_for_gitea() {
 
 setup_gitea_user() {
   log "Creating Gitea admin user '${GITEA_USER}'..."
-  docker exec gitops-gitea \
+  docker exec -u git gitops-gitea \
     gitea admin user create \
       --username "$GITEA_USER" \
       --password "$GITEA_PASS" \
@@ -203,6 +216,54 @@ connect_gitea_to_kind_network() {
 gitea_kind_ip() {
   docker inspect gitops-gitea \
     --format '{{.NetworkSettings.Networks.kind.IPAddress}}' 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# Argo CD UI port-forward
+# ---------------------------------------------------------------------------
+
+# Start port-forward and print login instructions; kills itself on EXIT.
+start_argocd_ui() {
+  if [ "$EXPOSE_UI" != true ]; then return; fi
+
+  log "Starting Argo CD UI port-forward → https://localhost:8080"
+
+  # Wait for argocd-server pod to be ready before forwarding.
+  kubectl --context "$K8S_CONTEXT" -n argocd wait pod \
+    --for=condition=Ready --selector=app.kubernetes.io/name=argocd-server \
+    --timeout=120s 2>/dev/null || true
+
+  kubectl --context "$K8S_CONTEXT" \
+    port-forward svc/argocd-server -n argocd 8080:443 \
+    >/dev/null 2>&1 &
+  ARGOCD_PF_PID=$!
+  disown "$ARGOCD_PF_PID" 2>/dev/null || true
+
+  # Give the tunnel a moment to open.
+  sleep 2
+
+  local admin_pass
+  admin_pass=$(kubectl --context "$K8S_CONTEXT" \
+    -n argocd get secret argocd-initial-admin-secret \
+    -o jsonpath="{.data.password}" 2>/dev/null | base64 --decode 2>/dev/null || echo "(not yet available)")
+
+  echo ""
+  echo "  ┌─────────────────────────────────────────────────────┐"
+  echo "  │  Argo CD UI  →  https://localhost:8080              │"
+  echo "  │  Username:       admin                              │"
+  echo "  │  Password:       ${admin_pass}$(printf '%*s' $((50 - ${#admin_pass})) '')│"
+  echo "  │  (accept the self-signed TLS cert in your browser)  │"
+  echo "  └─────────────────────────────────────────────────────┘"
+  echo ""
+}
+
+stop_argocd_ui() {
+  if [ -n "$ARGOCD_PF_PID" ] && kill -0 "$ARGOCD_PF_PID" 2>/dev/null; then
+    disown "$ARGOCD_PF_PID" 2>/dev/null || true
+    kill  "$ARGOCD_PF_PID" 2>/dev/null || true
+    ARGOCD_PF_PID=""
+    log "Argo CD UI port-forward stopped."
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -348,6 +409,84 @@ uninstall_fluxcd() {
 }
 
 # ---------------------------------------------------------------------------
+# Flux CD log streaming
+# ---------------------------------------------------------------------------
+FLUX_LOG_PID=""
+FLUX_UI_PID=""
+
+# Tail kustomize-controller and source-controller logs to stderr with a
+# [flux-log] prefix so they don't pollute the results output.
+start_flux_logs() {
+  if [ "$EXPOSE_UI" != true ]; then return; fi
+
+  log "Streaming Flux controller logs (prefix: [flux-log]) ..."
+  (
+    kubectl --context "$K8S_CONTEXT" \
+      -n flux-system logs \
+      --selector='app in (kustomize-controller,source-controller)' \
+      --follow --prefix --timestamps \
+      2>/dev/null \
+    | sed 's/^/  [flux-log] /' >&2
+  ) &
+  FLUX_LOG_PID=$!
+  disown "$FLUX_LOG_PID" 2>/dev/null || true
+
+  # Try to start Capacitor UI (local binary, no cluster install needed).
+  # Install: brew install gimlet-io/capacitor/capacitor
+  #      or: wget -qO- https://gimlet.io/install-capacitor | bash
+  local capacitor_bin=""
+  have_cmd capacitor && capacitor_bin="capacitor"
+  have_cmd next      && capacitor_bin="next"        # Capacitor's binary is also named 'next'
+
+  if [ -n "$capacitor_bin" ]; then
+    log "Starting Capacitor (Flux UI) on http://localhost:3333 ..."
+    "$capacitor_bin" \
+      --kubeconfig "$(kubectl --context "$K8S_CONTEXT" config view --minify --flatten \
+                       -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null; true)" \
+      --context "$K8S_CONTEXT" \
+      --port 3333 \
+      >/dev/null 2>&1 &
+    FLUX_UI_PID=$!
+    disown "$FLUX_UI_PID" 2>/dev/null || true
+    sleep 2
+    echo ""
+    echo "  ┌─────────────────────────────────────────────────────────┐"
+    echo "  │  Capacitor (Flux UI) → http://localhost:3333            │"
+    echo "  │  No login required — reads cluster via kubeconfig       │"
+    echo "  │                                                         │"
+    echo "  │  Controller logs streaming below (prefix: [flux-log])   │"
+    echo "  │  To watch CMs live (another terminal):                  │"
+    echo "  │    watch -n2 flux get all --context ${K8S_CONTEXT}      │"
+    echo "  └─────────────────────────────────────────────────────────┘"
+    echo ""
+  else
+    warn "Capacitor not found — install with: brew install gimlet-io/capacitor/capacitor"
+    echo ""
+    echo "  ┌─────────────────────────────────────────────────────────┐"
+    echo "  │  Controller logs streaming below (prefix: [flux-log])   │"
+    echo "  │  To watch CMs live (another terminal):                  │"
+    echo "  │    watch -n2 flux get all --context ${K8S_CONTEXT}      │"
+    echo "  │    kubectl get cm -n bench-flux --context ${K8S_CONTEXT}│"
+    echo "  └─────────────────────────────────────────────────────────┘"
+    echo ""
+  fi
+}
+
+stop_flux_logs() {
+  if [ -n "$FLUX_UI_PID" ] && kill -0 "$FLUX_UI_PID" 2>/dev/null; then
+    disown "$FLUX_UI_PID" 2>/dev/null || true
+    kill   "$FLUX_UI_PID" 2>/dev/null || true
+    FLUX_UI_PID=""
+    log "Capacitor stopped."
+  fi
+  if [ -n "$FLUX_LOG_PID" ] && kill -0 "$FLUX_LOG_PID" 2>/dev/null; then
+    disown "$FLUX_LOG_PID" 2>/dev/null || true
+    kill   "$FLUX_LOG_PID" 2>/dev/null || true
+    FLUX_LOG_PID=""
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # Benchmark runner
 # ---------------------------------------------------------------------------
 run_bench() {
@@ -360,9 +499,10 @@ run_bench() {
   cnt=$(selected_count)
   bulk=$(selected_bulk_size)
 
-  log "Running benchmark: tool=${tool} count=${cnt} bulk=${bulk}"
+  log "Running benchmark: tool=${tool} workload=${WORKLOAD} count=${cnt} bulk=${bulk}"
   "$BENCH_BIN" \
     --tool         "$tool" \
+    --workload     "$WORKLOAD" \
     --op           all \
     --count        "$cnt" \
     --bulk-size    "$bulk" \
@@ -450,38 +590,75 @@ GITEA_KIND_IP=$(gitea_kind_ip)
 [ -z "$GITEA_KIND_IP" ] && die "Could not detect Gitea IP on kind network"
 log "Gitea reachable inside kind at: ${GITEA_KIND_IP}:3000"
 
-trap 'cleanup_kind; cleanup_gitea' EXIT
+trap 'stop_argocd_ui; stop_flux_logs; cleanup_kind; cleanup_gitea' EXIT
+
 
 # ---- Argo CD benchmark ----
 log "=== Argo CD benchmark ==="
 install_argocd
 create_argocd_app "$GITEA_KIND_IP" "bench-argocd" "bench-argocd"
-
-if [ "$SMOKE_ONLY" = true ]; then
-  run_bench "argocd" "bench-argocd" "bench-argocd" "$RESULTS_DIR/argocd.json"
-  log "Smoke-only: skipping full ArgoCD run."
-else
-  run_bench "argocd" "bench-argocd" "bench-argocd" "$RESULTS_DIR/argocd.json"
+start_argocd_ui
+run_bench "argocd" "bench-argocd" "bench-argocd" "$RESULTS_DIR/argocd.json"
+stop_argocd_ui
+if [ "$KEEP_TOOLS" = false ]; then
+  uninstall_argocd
 fi
-uninstall_argocd
 
 # ---- Flux CD benchmark ----
 log "=== Flux CD benchmark ==="
 install_fluxcd
 create_flux_source "$GITEA_KIND_IP" "bench-flux" "bench-flux"
-
-if [ "$SMOKE_ONLY" = true ]; then
-  run_bench "flux" "bench-flux" "bench-flux" "$RESULTS_DIR/flux.json"
-  log "Smoke-only: skipping full Flux run."
-else
-  run_bench "flux" "bench-flux" "bench-flux" "$RESULTS_DIR/flux.json"
+start_flux_logs
+run_bench "flux" "bench-flux" "bench-flux" "$RESULTS_DIR/flux.json"
+stop_flux_logs
+if [ "$KEEP_TOOLS" = false ]; then
+  uninstall_fluxcd
 fi
-uninstall_fluxcd
 
 # ---- Aggregate ----
 merge_results
 verify_results
 print_table
 
+if [ "$KEEP_TOOLS" = true ]; then
+  ARGOCD_PASS=$(kubectl --context "$K8S_CONTEXT" \
+    -n argocd get secret argocd-initial-admin-secret \
+    -o jsonpath="{.data.password}" 2>/dev/null | base64 --decode 2>/dev/null || echo "N/A")
+
+  echo ""
+  echo "════════════════════════════════════════════════════════════"
+  echo "  --keep-tools: cluster and tools left running"
+  echo "════════════════════════════════════════════════════════════"
+  echo ""
+  echo "  Kind cluster:   $K8S_CLUSTER"
+  echo "  kubectl context: $K8S_CONTEXT"
+  echo "  Gitea UI:       $GITEA_URL  (user: $GITEA_USER / pass: $GITEA_PASS)"
+  echo ""
+  echo "  Argo CD"
+  echo "    kubectl --context $K8S_CONTEXT port-forward svc/argocd-server -n argocd 8080:443"
+  echo "    URL:      https://localhost:8080"
+  echo "    Login:    admin / $ARGOCD_PASS"
+  echo "    Explore:  kubectl --context $K8S_CONTEXT get app -n argocd"
+  echo "              kubectl --context $K8S_CONTEXT get cm -n bench-argocd"
+  echo ""
+  echo "  Flux CD"
+  echo "    flux --context $K8S_CONTEXT get all"
+  echo "    kubectl --context $K8S_CONTEXT get cm,deploy -n bench-flux"
+  if have_cmd capacitor || have_cmd next; then
+    echo "    capacitor --context $K8S_CONTEXT --port 3333   # → http://localhost:3333"
+  fi
+  echo ""
+  echo "  To push a new manifest manually:"
+  echo "    curl -u $GITEA_USER:$GITEA_PASS -X POST $GITEA_URL/api/v1/repos/$GITEA_USER/bench-flux/contents/manifests/my.yaml \\"
+  echo "      -H 'Content-Type: application/json' \\"
+  echo "      -d '{\"message\":\"manual push\",\"content\":\"<base64 yaml>\",\"branch\":\"main\"}'"
+  echo ""
+  echo "  Teardown when done:"
+  echo "    kind delete cluster --name $K8S_CLUSTER"
+  echo "    docker compose -f $COMPOSE_DIR/docker-compose.yml down -v"
+  echo "════════════════════════════════════════════════════════════"
+  echo ""
+fi
+
 log "Done. Results: $RESULTS_DIR/summary.json"
-log "Gitea UI: ${GITEA_URL}"
+[ "$KEEP_TOOLS" = false ] && log "Gitea UI: ${GITEA_URL}"
