@@ -1,37 +1,37 @@
 {
   "tool": "argocd",
-  "run_id": "argocd-1783576211",
-  "timestamp": "2026-07-09T05:50:11Z",
+  "run_id": "argocd-1783583264",
+  "timestamp": "2026-07-09T07:47:44Z",
   "results": [
     {
       "tool": "argocd",
       "op": "sync-latency",
-      "count": 3,
-      "p50_ms": 16326.624,
-      "p95_ms": 20404.198,
-      "p99_ms": 20404.198,
-      "min_ms": 738.081,
-      "max_ms": 20404.198,
-      "mean_ms": 12489.634333333333,
-      "total_ms": 37468
+      "count": 20,
+      "p50_ms": 19992.072,
+      "p95_ms": 20421.116,
+      "p99_ms": 20436.893,
+      "min_ms": 14939.81,
+      "max_ms": 20436.893,
+      "mean_ms": 19781.8622,
+      "total_ms": 395637
     },
     {
       "tool": "argocd",
       "op": "reconcile",
-      "count": 3,
-      "p50_ms": 2034.462,
-      "p95_ms": 6055.835,
-      "p99_ms": 6055.835,
-      "min_ms": 504.723,
-      "max_ms": 6055.835,
-      "mean_ms": 2865.0066666666667,
-      "total_ms": 8595
+      "count": 20,
+      "p50_ms": 161799.486,
+      "p95_ms": 162313.851,
+      "p99_ms": 162417.281,
+      "min_ms": 505.163,
+      "max_ms": 162417.281,
+      "mean_ms": 125466.09745,
+      "total_ms": 2509321
     },
     {
       "tool": "argocd",
       "op": "bulk",
-      "count": 3,
-      "total_ms": 11608
+      "count": 10,
+      "total_ms": 10968
     }
   ]
 }
