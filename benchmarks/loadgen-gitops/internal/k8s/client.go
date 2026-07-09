@@ -14,6 +14,13 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+// Workload kinds the benchmark can push.
+const (
+	WorkloadConfigMap  = "configmap"
+	WorkloadDeployment = "deployment"
+	WorkloadMixed      = "mixed"
+)
+
 type Client struct {
 	cs *kubernetes.Clientset
 }
@@ -83,6 +90,15 @@ func (c *Client) WaitForCM(ctx context.Context, ns, name string, timeout time.Du
 	return fmt.Errorf("timeout waiting for ConfigMap %s/%s after %s", ns, name, timeout)
 }
 
+// DeleteDeployment removes a Deployment; ignores not-found.
+func (c *Client) DeleteDeployment(ctx context.Context, ns, name string) error {
+	err := c.cs.AppsV1().Deployments(ns).Delete(ctx, name, metav1.DeleteOptions{})
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+	return err
+}
+
 // DeleteCM removes a ConfigMap; ignores not-found.
 func (c *Client) DeleteCM(ctx context.Context, ns, name string) error {
 	err := c.cs.CoreV1().ConfigMaps(ns).Delete(ctx, name, metav1.DeleteOptions{})
@@ -90,6 +106,26 @@ func (c *Client) DeleteCM(ctx context.Context, ns, name string) error {
 		return nil
 	}
 	return err
+}
+
+// WaitForDeploymentReady polls until the Deployment has at least one available replica.
+func (c *Client) WaitForDeploymentReady(ctx context.Context, ns, name string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		d, err := c.cs.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
+		if err == nil && d.Status.AvailableReplicas >= 1 {
+			return nil
+		}
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(500 * time.Millisecond):
+		}
+	}
+	return fmt.Errorf("timeout waiting for Deployment %s/%s to become available after %s", ns, name, timeout)
 }
 
 // WaitForCMGone polls until the ConfigMap is absent, or until timeout.

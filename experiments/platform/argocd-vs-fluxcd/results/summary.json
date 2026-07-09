@@ -1,0 +1,89 @@
+{
+  "schema_version": "results-summary/v1",
+  "experiment": {
+    "id": "argocd-vs-fluxcd",
+    "name": "Argo CD vs Flux CD",
+    "category": "platform",
+    "path": "experiments/platform/argocd-vs-fluxcd"
+  },
+  "run_id": "argocd-vs-fluxcd-2026-07-09T05:50:11Z",
+  "timestamp": "2026-07-09T05:50:11Z",
+  "mode": "full",
+  "config": {
+    "count": 3,
+    "bulk_size": 3,
+    "sync_timeout": "120s"
+  },
+  "sources": [
+    {
+      "name": "argocd",
+      "file": "results/argocd.json"
+    },
+    {
+      "name": "flux",
+      "file": "results/flux.json"
+    }
+  ],
+  "results": [
+    {
+      "tool": "argocd",
+      "op": "sync-latency",
+      "count": 3,
+      "p50_ms": 16326.624,
+      "p95_ms": 20404.198,
+      "p99_ms": 20404.198,
+      "min_ms": 738.081,
+      "max_ms": 20404.198,
+      "mean_ms": 12489.634333333333,
+      "total_ms": 37468
+    },
+    {
+      "tool": "argocd",
+      "op": "reconcile",
+      "count": 3,
+      "p50_ms": 2034.462,
+      "p95_ms": 6055.835,
+      "p99_ms": 6055.835,
+      "min_ms": 504.723,
+      "max_ms": 6055.835,
+      "mean_ms": 2865.0066666666667,
+      "total_ms": 8595
+    },
+    {
+      "tool": "argocd",
+      "op": "bulk",
+      "count": 3,
+      "total_ms": 11608
+    },
+    {
+      "tool": "flux",
+      "op": "sync-latency",
+      "count": 3,
+      "p50_ms": 9825.526,
+      "p95_ms": 10340.513,
+      "p99_ms": 10340.513,
+      "min_ms": 7197.703,
+      "max_ms": 10340.513,
+      "mean_ms": 9121.247333333335,
+      "total_ms": 27363
+    },
+    {
+      "tool": "flux",
+      "op": "reconcile",
+      "count": 3,
+      "p50_ms": 9611.43,
+      "p95_ms": 10618.959,
+      "p99_ms": 10618.959,
+      "min_ms": 9589.711,
+      "max_ms": 10618.959,
+      "mean_ms": 9940.033333333335,
+      "total_ms": 29820
+    },
+    {
+      "tool": "flux",
+      "op": "bulk",
+      "count": 3,
+      "total_ms": 10126
+    }
+  ]
+}
