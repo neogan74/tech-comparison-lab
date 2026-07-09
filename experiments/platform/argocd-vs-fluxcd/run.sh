@@ -489,6 +489,24 @@ stop_flux_logs() {
 # ---------------------------------------------------------------------------
 # Benchmark runner
 # ---------------------------------------------------------------------------
+setup_repo() {
+  local tool="$1"
+  local repo_name="$2"
+  local dest_ns="$3"
+
+  log "Ensuring Gitea repo '${repo_name}' and anchor manifest exist..."
+  "$BENCH_BIN" \
+    --tool         "$tool" \
+    --workload     "$WORKLOAD" \
+    --op           setup \
+    --context      "$K8S_CONTEXT" \
+    --namespace    "$dest_ns" \
+    --gitea-url    "$GITEA_URL" \
+    --gitea-user   "$GITEA_USER" \
+    --gitea-pass   "$GITEA_PASS" \
+    --gitea-repo   "$repo_name"
+}
+
 run_bench() {
   local tool="$1"
   local repo_name="$2"
@@ -596,6 +614,7 @@ trap 'stop_argocd_ui; stop_flux_logs; cleanup_kind; cleanup_gitea' EXIT
 # ---- Argo CD benchmark ----
 log "=== Argo CD benchmark ==="
 install_argocd
+setup_repo "argocd" "bench-argocd" "bench-argocd"
 create_argocd_app "$GITEA_KIND_IP" "bench-argocd" "bench-argocd"
 start_argocd_ui
 run_bench "argocd" "bench-argocd" "bench-argocd" "$RESULTS_DIR/argocd.json"
@@ -607,6 +626,7 @@ fi
 # ---- Flux CD benchmark ----
 log "=== Flux CD benchmark ==="
 install_fluxcd
+setup_repo "flux" "bench-flux" "bench-flux"
 create_flux_source "$GITEA_KIND_IP" "bench-flux" "bench-flux"
 start_flux_logs
 run_bench "flux" "bench-flux" "bench-flux" "$RESULTS_DIR/flux.json"
