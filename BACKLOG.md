@@ -12,6 +12,9 @@
 - RabbitMQ vs NATS
 - Kubernetes vs OpenShift (kind)
 - Redis vs Memcached
+- etcd vs Consul
+- Argo CD vs Flux CD (kind)
+- Prometheus vs VictoriaMetrics
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
 
@@ -52,6 +55,12 @@ The following experiments are planned but not yet implemented. Choose from this 
 **API / Networking:**
 - ~~GraphQL vs REST — API query models~~ ✅
 - Kong vs Traefik — API gateway
+
+**Observability:**
+- ~~Prometheus vs VictoriaMetrics — metrics storage~~ ✅
+- Loki vs Elasticsearch — log storage
+- Jaeger vs Zipkin — distributed tracing
+- Zabbix vs Prometheus — monitoring systems
 
 **Definition of Done for New Experiments:**
 - [ ] Create benchmark in `benchmarks/loadgen-*/`

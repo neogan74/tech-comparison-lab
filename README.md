@@ -16,6 +16,8 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | RabbitMQ vs NATS | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kubernetes vs OpenShift | smoke-tested (kind) | CI validates `loadgen-k8s`, `run.sh`, and runs kind-only smoke; OpenShift side remains manual |
 | etcd vs Consul | smoke-tested | CI validates `loadgen-kv`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
+| Argo CD vs Flux CD | smoke-tested (kind) | CI validates `loadgen-gitops`, `run.sh`, and runs kind-only smoke |
+| Prometheus vs VictoriaMetrics | smoke-tested | CI validates `loadgen-observability`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 
 ## Repository Commands
 
