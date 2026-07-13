@@ -6,13 +6,13 @@
     "category": "platform",
     "path": "experiments/platform/argocd-vs-fluxcd"
   },
-  "run_id": "argocd-vs-fluxcd-2026-07-09T05:50:11Z",
-  "timestamp": "2026-07-09T05:50:11Z",
+  "run_id": "argocd-vs-fluxcd-2026-07-09T07:47:44Z",
+  "timestamp": "2026-07-09T07:47:44Z",
   "mode": "full",
   "config": {
-    "count": 3,
-    "bulk_size": 3,
-    "sync_timeout": "120s"
+    "count": 20,
+    "bulk_size": 10,
+    "sync_timeout": "300s"
   },
   "sources": [
     {
@@ -28,62 +28,62 @@
     {
       "tool": "argocd",
       "op": "sync-latency",
-      "count": 3,
-      "p50_ms": 16326.624,
-      "p95_ms": 20404.198,
-      "p99_ms": 20404.198,
-      "min_ms": 738.081,
-      "max_ms": 20404.198,
-      "mean_ms": 12489.634333333333,
-      "total_ms": 37468
+      "count": 20,
+      "p50_ms": 19992.072,
+      "p95_ms": 20421.116,
+      "p99_ms": 20436.893,
+      "min_ms": 14939.81,
+      "max_ms": 20436.893,
+      "mean_ms": 19781.8622,
+      "total_ms": 395637
     },
     {
       "tool": "argocd",
       "op": "reconcile",
-      "count": 3,
-      "p50_ms": 2034.462,
-      "p95_ms": 6055.835,
-      "p99_ms": 6055.835,
-      "min_ms": 504.723,
-      "max_ms": 6055.835,
-      "mean_ms": 2865.0066666666667,
-      "total_ms": 8595
+      "count": 20,
+      "p50_ms": 161799.486,
+      "p95_ms": 162313.851,
+      "p99_ms": 162417.281,
+      "min_ms": 505.163,
+      "max_ms": 162417.281,
+      "mean_ms": 125466.09745,
+      "total_ms": 2509321
     },
     {
       "tool": "argocd",
       "op": "bulk",
-      "count": 3,
-      "total_ms": 11608
+      "count": 10,
+      "total_ms": 10968
     },
     {
       "tool": "flux",
       "op": "sync-latency",
-      "count": 3,
-      "p50_ms": 9825.526,
-      "p95_ms": 10340.513,
-      "p99_ms": 10340.513,
-      "min_ms": 7197.703,
-      "max_ms": 10340.513,
-      "mean_ms": 9121.247333333335,
-      "total_ms": 27363
+      "count": 20,
+      "p50_ms": 9840.777,
+      "p95_ms": 10792.169,
+      "p99_ms": 10816.454,
+      "min_ms": 6816.033,
+      "max_ms": 10816.454,
+      "mean_ms": 9874.99295,
+      "total_ms": 197499
     },
     {
       "tool": "flux",
       "op": "reconcile",
-      "count": 3,
-      "p50_ms": 9611.43,
-      "p95_ms": 10618.959,
-      "p99_ms": 10618.959,
-      "min_ms": 9589.711,
-      "max_ms": 10618.959,
-      "mean_ms": 9940.033333333335,
-      "total_ms": 29820
+      "count": 20,
+      "p50_ms": 10111.389,
+      "p95_ms": 10610.274,
+      "p99_ms": 10621.552,
+      "min_ms": 9605.715,
+      "max_ms": 10621.552,
+      "mean_ms": 10088.4868,
+      "total_ms": 201769
     },
     {
       "tool": "flux",
       "op": "bulk",
-      "count": 3,
-      "total_ms": 10126
+      "count": 10,
+      "total_ms": 7536
     }
   ]
 }

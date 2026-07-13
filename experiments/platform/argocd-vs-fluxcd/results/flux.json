@@ -1,37 +1,37 @@
 {
   "tool": "flux",
-  "run_id": "flux-1783576299",
-  "timestamp": "2026-07-09T05:51:39Z",
+  "run_id": "flux-1783583753",
+  "timestamp": "2026-07-09T07:55:53Z",
   "results": [
     {
       "tool": "flux",
       "op": "sync-latency",
-      "count": 3,
-      "p50_ms": 9825.526,
-      "p95_ms": 10340.513,
-      "p99_ms": 10340.513,
-      "min_ms": 7197.703,
-      "max_ms": 10340.513,
-      "mean_ms": 9121.247333333335,
-      "total_ms": 27363
+      "count": 20,
+      "p50_ms": 9840.777,
+      "p95_ms": 10792.169,
+      "p99_ms": 10816.454,
+      "min_ms": 6816.033,
+      "max_ms": 10816.454,
+      "mean_ms": 9874.99295,
+      "total_ms": 197499
     },
     {
       "tool": "flux",
       "op": "reconcile",
-      "count": 3,
-      "p50_ms": 9611.43,
-      "p95_ms": 10618.959,
-      "p99_ms": 10618.959,
-      "min_ms": 9589.711,
-      "max_ms": 10618.959,
-      "mean_ms": 9940.033333333335,
-      "total_ms": 29820
+      "count": 20,
+      "p50_ms": 10111.389,
+      "p95_ms": 10610.274,
+      "p99_ms": 10621.552,
+      "min_ms": 9605.715,
+      "max_ms": 10621.552,
+      "mean_ms": 10088.4868,
+      "total_ms": 201769
     },
     {
       "tool": "flux",
       "op": "bulk",
-      "count": 3,
-      "total_ms": 10126
+      "count": 10,
+      "total_ms": 7536
     }
   ]
 }
