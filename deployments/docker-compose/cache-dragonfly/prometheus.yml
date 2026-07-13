@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: redis
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          instance: redis
+
+  - job_name: dragonfly
+    static_configs:
+      - targets: ["dragonfly-exporter:9121"]
+        labels:
+          instance: dragonfly

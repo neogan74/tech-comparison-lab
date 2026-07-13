@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	db := flag.String("db", "", "database: redis | valkey | memcached (required)")
+	db := flag.String("db", "", "database: redis | valkey | dragonfly | memcached (required)")
 	op := flag.String("op", "all", "operation: set|get|pipeline-set|pipeline-get|mixed|all")
 	count := flag.Int("count", 1000000, "total keys for set/pipeline-set; ignored for get/mixed (use --iterations)")
 	iterations := flag.Int("iterations", 100000, "iterations for get/pipeline-get/mixed")
@@ -26,7 +26,7 @@ func main() {
 	flag.Parse()
 
 	if *db == "" {
-		fmt.Fprintln(os.Stderr, "error: --db is required (redis | valkey | memcached)")
+		fmt.Fprintln(os.Stderr, "error: --db is required (redis | valkey | dragonfly | memcached)")
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -44,6 +44,7 @@ func main() {
 		envKey := map[string]string{
 			"redis":     "REDIS_ADDR",
 			"valkey":    "VALKEY_ADDR",
+			"dragonfly": "DRAGONFLY_ADDR",
 			"memcached": "MEMCACHED_ADDR",
 		}[*db]
 		*addr = os.Getenv(envKey)
@@ -52,6 +53,7 @@ func main() {
 		defaults := map[string]string{
 			"redis":     "localhost:6379",
 			"valkey":    "localhost:6380",
+			"dragonfly": "localhost:6384",
 			"memcached": "localhost:11211",
 		}
 		*addr = defaults[*db]
@@ -114,7 +116,7 @@ func validateConfig(db string, cfg runConfig) error {
 	if !validOps[cfg.op] {
 		return fmt.Errorf("unknown --op %q, want set|get|pipeline-set|pipeline-get|mixed|all", cfg.op)
 	}
-	validDBs := map[string]bool{"redis": true, "valkey": true, "memcached": true}
+	validDBs := map[string]bool{"redis": true, "valkey": true, "dragonfly": true, "memcached": true}
 	if !validDBs[db] {
 		return fmt.Errorf("unknown --db %q", db)
 	}

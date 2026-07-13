@@ -11,6 +11,7 @@ EXPERIMENTS := \
 	kong-vs-traefik \
 	redis-vs-valkey \
 	redis-vs-memcached \
+	redis-vs-dragonfly \
 	clickhouse-vs-postgresql \
 	kafka-vs-rabbitmq \
 	nats-vs-kafka \

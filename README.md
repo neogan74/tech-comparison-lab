@@ -10,6 +10,7 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | gRPC vs REST | smoke-tested | CI validates server/loadgen modules and runs end-to-end smoke |
 | Redis vs Valkey | smoke-tested | CI validates `loadgen-cache`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Redis vs Memcached | smoke-tested | CI validates `loadgen-cache`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
+| Redis vs Dragonfly | smoke-tested | CI validates `loadgen-cache`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | ClickHouse vs PostgreSQL | smoke-tested | CI validates `loadgen-analytics`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kafka vs RabbitMQ | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | NATS vs Apache Kafka | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
@@ -68,6 +69,7 @@ Here is the list of technologies to compare:
 - etcd vs Consul
 
 - Redis vs Dragonfly
+    → single-thread cache throughput, tail latency, and memory efficiency
 
 ## 📡 Messaging / Streaming
 
