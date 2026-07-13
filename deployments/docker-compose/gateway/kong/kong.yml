@@ -1,0 +1,13 @@
+_format_version: "3.0"
+
+# DB-less declarative config: one service (the shared bench-api on the host)
+# with a catch-all route so Kong proxies every path unchanged. strip_path is
+# false so /echo, /users/{id} and /orders reach the upstream verbatim.
+services:
+  - name: bench-api
+    url: http://host.docker.internal:8080
+    routes:
+      - name: catch-all
+        paths:
+          - /
+        strip_path: false

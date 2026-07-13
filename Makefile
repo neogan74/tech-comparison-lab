@@ -8,6 +8,7 @@ EXPERIMENTS := \
 	postgres-vs-cockroachdb \
 	grpc-vs-rest \
 	graphql-vs-rest \
+	kong-vs-traefik \
 	redis-vs-valkey \
 	redis-vs-memcached \
 	clickhouse-vs-postgresql \
