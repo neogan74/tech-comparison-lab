@@ -1,0 +1,48 @@
+services:
+  # Kong API gateway — DB-less (declarative) mode.
+  # Proxies every path to the shared bench-api running on the host (:8080).
+  kong:
+    image: kong:3.9
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_ACCESS_LOG: /dev/null
+      KONG_ADMIN_ACCESS_LOG: /dev/null
+      KONG_NGINX_WORKER_PROCESSES: "auto"
+    ports:
+      - "8000:8000"   # proxy
+      - "8001:8001"   # admin API
+    volumes:
+      - ./kong:/kong:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Traefik API gateway — file provider (static route to the same upstream).
+  traefik:
+    image: traefik:v3.3
+    command:
+      - "--entrypoints.web.address=:80"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--providers.file.watch=true"
+      - "--api.dashboard=false"
+      - "--ping=true"
+      - "--log.level=ERROR"
+      - "--accesslog=false"
+    ports:
+      - "8081:80"     # proxy
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

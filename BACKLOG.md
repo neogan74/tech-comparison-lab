@@ -15,6 +15,7 @@
 - etcd vs Consul
 - Argo CD vs Flux CD (kind)
 - Prometheus vs VictoriaMetrics
+- Kong vs Traefik
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
 
@@ -54,7 +55,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 
 **API / Networking:**
 - ~~GraphQL vs REST — API query models~~ ✅
-- Kong vs Traefik — API gateway
+- ~~Kong vs Traefik — API gateway~~ ✅
 
 **Observability:**
 - ~~Prometheus vs VictoriaMetrics — metrics storage~~ ✅
