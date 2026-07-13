@@ -1,0 +1,70 @@
+services:
+  redis:
+    image: redis:7
+    command: redis-server /etc/redis/redis.conf
+    ports:
+      - "6383:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.38.0
+    command:
+      - --maxmemory=3gb
+      - --cache_mode=true
+      - --proactor_threads=1
+    ports:
+      - "6384:6379"
+    ulimits:
+      memlock: -1
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - "9125:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  dragonfly-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      REDIS_ADDR: redis://dragonfly:6379
+    ports:
+      - "9126:9121"
+    depends_on:
+      dragonfly:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9097:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - redis-exporter
+      - dragonfly-exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3007:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
+volumes:
+  redis_data:

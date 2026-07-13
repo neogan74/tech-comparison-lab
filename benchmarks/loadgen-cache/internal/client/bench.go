@@ -12,10 +12,10 @@ import (
 )
 
 // Bench wraps a go-redis client for benchmark operations.
-// Works with both Redis and Valkey (same RESP protocol).
+// Works with Redis, Valkey, and Dragonfly (same RESP protocol).
 type Bench struct {
 	rdb  *redis.Client
-	name string // "redis" or "valkey"
+	name string // Redis-compatible backend name
 }
 
 // newRedisBench connects to addr and pings the server.

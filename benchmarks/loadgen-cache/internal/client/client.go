@@ -19,10 +19,10 @@ type Client interface {
 }
 
 // New returns a Client for the given db name and address.
-// Supported db values: "redis", "valkey", "memcached".
+// Supported db values: "redis", "valkey", "dragonfly", "memcached".
 func New(name, addr string) (Client, error) {
 	switch name {
-	case "redis", "valkey":
+	case "redis", "valkey", "dragonfly":
 		return newRedisBench(name, addr)
 	case "memcached":
 		return newMemcachedBench(addr)

@@ -12,6 +12,7 @@
 - RabbitMQ vs NATS
 - Kubernetes vs OpenShift (kind)
 - Redis vs Memcached
+- Redis vs Dragonfly
 - etcd vs Consul
 - Argo CD vs Flux CD (kind)
 - Prometheus vs VictoriaMetrics
@@ -41,7 +42,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 **Cache / KV:**continue
 - ~~Redis vs Memcached — cache performance~~ ✅
 - etcd vs Consul — KV store consensus
-- Redis vs Dragonfly — Redis alternative
+- ~~Redis vs Dragonfly — Redis alternative~~ ✅
 
 **Messaging / Streaming:**
 - Apache Kafka vs Apache Pulsar — streaming comparison
