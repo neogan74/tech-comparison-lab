@@ -16,7 +16,8 @@ EXPERIMENTS := \
 	rabbitmq-vs-nats \
 	k8s-vs-openshift \
 	etcd-vs-consul \
-	argocd-vs-fluxcd
+	argocd-vs-fluxcd \
+	prometheus-vs-victoriametrics
 
 .PHONY: \
 	help \
