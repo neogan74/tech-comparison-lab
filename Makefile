@@ -15,6 +15,7 @@ EXPERIMENTS := \
 	redis-vs-dragonfly \
 	clickhouse-vs-postgresql \
 	kafka-vs-rabbitmq \
+	kafka-vs-pulsar \
 	nats-vs-kafka \
 	rabbitmq-vs-nats \
 	k8s-vs-openshift \

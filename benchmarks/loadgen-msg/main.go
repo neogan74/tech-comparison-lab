@@ -11,30 +11,31 @@ import (
 
 	kafkabench "github.com/tech-comparison-lab/loadgen-msg/internal/kafka"
 	natsbench "github.com/tech-comparison-lab/loadgen-msg/internal/nats"
+	pulsarbench "github.com/tech-comparison-lab/loadgen-msg/internal/pulsar"
 	rabbitbench "github.com/tech-comparison-lab/loadgen-msg/internal/rabbit"
 	"github.com/tech-comparison-lab/loadgen-msg/internal/report"
 )
 
 func main() {
-	db := flag.String("db", "", "broker: kafka | rabbitmq | nats (required)")
+	db := flag.String("db", "", "broker: kafka | pulsar | rabbitmq | nats (required)")
 	op := flag.String("op", "all", "operation: produce|consume|all")
 	count := flag.Int("count", 1000000, "total messages")
 	batchSize := flag.Int("batch", 1000, "messages per batch write")
 	consumers := flag.Int("consumers", 3, "concurrent consumers")
-	addr := flag.String("addr", "", "broker address (or KAFKA_ADDR / RABBIT_ADDR / NATS_ADDR env)")
-	topic := flag.String("topic", "bench", "Kafka topic / RabbitMQ queue name / NATS subject")
-	partitions := flag.Int("partitions", 3, "Kafka topic partitions")
+	addr := flag.String("addr", "", "broker address (or KAFKA_ADDR / PULSAR_ADDR / RABBIT_ADDR / NATS_ADDR env)")
+	topic := flag.String("topic", "bench", "Kafka/Pulsar topic, RabbitMQ queue, or NATS subject")
+	partitions := flag.Int("partitions", 3, "Kafka/Pulsar topic partitions")
 	out := flag.String("out", "", "write JSON results to file (optional)")
 	clean := flag.Bool("clean", false, "delete topic/queue before running")
 	dryRun := flag.Bool("dry-run", false, "test connectivity only")
 	flag.Parse()
 
 	if *db == "" {
-		fmt.Fprintln(os.Stderr, "error: --db is required (kafka | rabbitmq | nats)")
+		fmt.Fprintln(os.Stderr, "error: --db is required (kafka | pulsar | rabbitmq | nats)")
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *db != "kafka" && *db != "rabbitmq" && *db != "nats" {
+	if *db != "kafka" && *db != "pulsar" && *db != "rabbitmq" && *db != "nats" {
 		fmt.Fprintf(os.Stderr, "error: unknown --db %q\n", *db)
 		os.Exit(1)
 	}
@@ -43,12 +44,13 @@ func main() {
 		os.Exit(1)
 	}
 	if *addr == "" {
-		envKey := map[string]string{"kafka": "KAFKA_ADDR", "rabbitmq": "RABBIT_ADDR", "nats": "NATS_ADDR"}[*db]
+		envKey := map[string]string{"kafka": "KAFKA_ADDR", "pulsar": "PULSAR_ADDR", "rabbitmq": "RABBIT_ADDR", "nats": "NATS_ADDR"}[*db]
 		*addr = os.Getenv(envKey)
 	}
 	if *addr == "" {
 		defaults := map[string]string{
 			"kafka":    "localhost:9093",
+			"pulsar":   "pulsar://localhost:6650",
 			"rabbitmq": "amqp://bench:benchpass@localhost:5672/",
 			"nats":     "nats://localhost:4222",
 		}
@@ -61,6 +63,8 @@ func main() {
 	switch *db {
 	case "kafka":
 		results = runKafka(ctx, *addr, *op, *count, *batchSize, *consumers, *partitions, *topic, *clean, *dryRun)
+	case "pulsar":
+		results = runPulsar(ctx, *addr, *op, *count, *batchSize, *consumers, *topic, *dryRun)
 	case "rabbitmq":
 		results = runRabbit(ctx, *addr, *op, *count, *batchSize, *consumers, *topic, *clean, *dryRun)
 	case "nats":
@@ -93,7 +97,7 @@ func validateConfig(db, op string, count, batchSize, consumers, partitions int) 
 	if !validOps[op] {
 		return fmt.Errorf("unknown --op %q, want produce|consume|all", op)
 	}
-	if db != "kafka" && db != "rabbitmq" && db != "nats" {
+	if db != "kafka" && db != "pulsar" && db != "rabbitmq" && db != "nats" {
 		return fmt.Errorf("unknown --db %q", db)
 	}
 	if count < 1 {
@@ -109,6 +113,56 @@ func validateConfig(db, op string, count, batchSize, consumers, partitions int) 
 		return fmt.Errorf("--partitions must be >= 1")
 	}
 	return nil
+}
+
+func runPulsar(ctx context.Context, addr, op string, count, batchSize, consumers int, topic string, dryRun bool) []report.Result {
+	bench, err := pulsarbench.New(addr, topic)
+	if err != nil {
+		log.Fatalf("pulsar connect: %v", err)
+	}
+	defer bench.Close()
+	fmt.Printf("pulsar: connected to %s\n", addr)
+
+	if dryRun {
+		fmt.Println("pulsar: dry-run OK")
+		return nil
+	}
+
+	var results []report.Result
+
+	if op == "produce" || op == "all" {
+		fmt.Printf("pulsar: producing %d messages (batch=%d)...\n", count, batchSize)
+		durs, total, err := bench.Produce(ctx, count, batchSize)
+		if err != nil {
+			log.Fatalf("pulsar produce: %v", err)
+		}
+		results = append(results, report.Compute("pulsar", "produce", count, batchSize, durs, total))
+		fmt.Printf("pulsar: produce done in %s\n", total.Round(time.Millisecond))
+	}
+
+	if op == "consume" || op == "all" {
+		fmt.Printf("pulsar: consuming %d messages (%d consumers)...\n", count, consumers)
+		stats, total, err := bench.Consume(ctx, count, consumers)
+		if err != nil {
+			log.Fatalf("pulsar consume: %v", err)
+		}
+		r := report.Compute("pulsar", "consume", stats.Total, 0, nil, total)
+		if total > 0 {
+			r.ThroughputOps = float64(stats.Total) / total.Seconds()
+		}
+		r.TotalMs = total.Milliseconds()
+		for i, n := range stats.PerConsumer {
+			qps := 0.0
+			if total > 0 {
+				qps = float64(n) / total.Seconds()
+			}
+			r.ConsumerStats = append(r.ConsumerStats, report.ConsumerStat{ID: i, Msgs: n, QPS: qps})
+		}
+		results = append(results, r)
+		fmt.Printf("pulsar: consume done in %s (%d msgs total)\n", total.Round(time.Millisecond), stats.Total)
+	}
+
+	return results
 }
 
 func runKafka(ctx context.Context, addr, op string, count, batchSize, consumers, partitions int, topic string, clean, dryRun bool) []report.Result {

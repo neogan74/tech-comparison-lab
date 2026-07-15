@@ -9,6 +9,7 @@
 - Redis vs Valkey
 - ClickHouse vs PostgreSQL
 - Kafka vs RabbitMQ
+- Apache Kafka vs Apache Pulsar
 - NATS vs Apache Kafka
 - RabbitMQ vs NATS
 - Kubernetes vs OpenShift (kind)
@@ -40,13 +41,13 @@ The following experiments are planned but not yet implemented. Choose from this 
 - ~~MySQL vs PostgreSQL — OLTP workloads~~ ✅
 - ~~MongoDB vs Cassandra — distributed NoSQL~~ ✅
 
-**Cache / KV:**continue
+**Cache / KV:**
 - ~~Redis vs Memcached — cache performance~~ ✅
 - etcd vs Consul — KV store consensus
 - ~~Redis vs Dragonfly — Redis alternative~~ ✅
 
 **Messaging / Streaming:**
-- Apache Kafka vs Apache Pulsar — streaming comparison
+- ~~Apache Kafka vs Apache Pulsar — streaming comparison~~ ✅
 
 **Kubernetes / Platform:**
 - Kubernetes vs Nomad — scheduler comparison
