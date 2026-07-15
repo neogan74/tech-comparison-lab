@@ -14,6 +14,7 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | Redis vs Dragonfly | smoke-tested | CI validates `loadgen-cache`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | ClickHouse vs PostgreSQL | smoke-tested | CI validates `loadgen-analytics`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kafka vs RabbitMQ | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
+| Apache Kafka vs Apache Pulsar | smoke-tested | CI validates partition parity, `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | NATS vs Apache Kafka | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | RabbitMQ vs NATS | smoke-tested | CI validates `loadgen-msg`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kubernetes vs OpenShift | smoke-tested (kind) | CI validates `loadgen-k8s`, `run.sh`, and runs kind-only smoke; OpenShift side remains manual |

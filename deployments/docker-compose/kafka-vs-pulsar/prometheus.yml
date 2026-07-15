@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: kafka
+    static_configs:
+      - targets: ["kafka-exporter:9308"]
+
+  - job_name: pulsar
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["pulsar:8080"]
