@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	csbench "github.com/tech-comparison-lab/loadgen-db/internal/cassandra"
 	crdbench "github.com/tech-comparison-lab/loadgen-db/internal/cockroachdb"
 	mbench "github.com/tech-comparison-lab/loadgen-db/internal/mongo"
 	mybench "github.com/tech-comparison-lab/loadgen-db/internal/mysql"
@@ -16,7 +17,7 @@ import (
 )
 
 func main() {
-	db := flag.String("db", "", "database: postgres | mongo | mysql | cockroachdb (required)")
+	db := flag.String("db", "", "database: postgres | mongo | mysql | cockroachdb | cassandra (required)")
 	op := flag.String("op", "all", "operation: insert | query | agg | update | all")
 	count := flag.Int("count", 100000, "number of documents to insert")
 	queryIter := flag.Int("query-iter", 0, "query iterations (default: min(count,1000))")
@@ -24,19 +25,19 @@ func main() {
 	updateIter := flag.Int("update-iter", 0, "update iterations (default: min(count/100,100), min 1)")
 	batch := flag.Int("batch", 1000, "batch size for inserts")
 	workers := flag.Int("workers", 8, "number of concurrent workers")
-	dsn := flag.String("dsn", "", "connection string (or use PG_DSN / MONGO_DSN env var)")
+	dsn := flag.String("dsn", "", "connection string (or use the database-specific DSN env var)")
 	out := flag.String("out", "", "write JSON results to this file (optional)")
 	truncate := flag.Bool("truncate", false, "truncate/drop collection before running")
 	dryRun := flag.Bool("dry-run", false, "test connectivity only, no benchmark")
 	flag.Parse()
 
 	if *db == "" {
-		fmt.Fprintln(os.Stderr, "error: --db is required (postgres | mongo | mysql)")
+		fmt.Fprintln(os.Stderr, "error: --db is required (postgres | mongo | mysql | cockroachdb | cassandra)")
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *db != "postgres" && *db != "mongo" && *db != "mysql" && *db != "cockroachdb" {
-		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo or mysql or cockroachdb\n", *db)
+	if *db != "postgres" && *db != "mongo" && *db != "mysql" && *db != "cockroachdb" && *db != "cassandra" {
+		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo or mysql or cockroachdb or cassandra\n", *db)
 		os.Exit(1)
 	}
 
@@ -62,11 +63,13 @@ func main() {
 			*dsn = os.Getenv("MYSQL_DSN")
 		case "cockroachdb":
 			*dsn = os.Getenv("CRDB_DSN")
+		case "cassandra":
+			*dsn = os.Getenv("CASSANDRA_DSN")
 		}
 	}
 	if *dsn == "" {
 		fmt.Fprintf(os.Stderr, "error: --dsn not set and %s env var is empty\n",
-			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN", "mysql": "MYSQL_DSN", "cockroachdb": "CRDB_DSN"}[*db])
+			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN", "mysql": "MYSQL_DSN", "cockroachdb": "CRDB_DSN", "cassandra": "CASSANDRA_DSN"}[*db])
 		os.Exit(1)
 	}
 
@@ -82,6 +85,8 @@ func main() {
 		results = runMySQL(ctx, *dsn, cfg)
 	case "cockroachdb":
 		results = runCockroachDB(ctx, *dsn, cfg)
+	case "cassandra":
+		results = runCassandra(ctx, *dsn, cfg)
 	}
 
 	if len(results) > 0 {
@@ -156,6 +161,13 @@ func validateConfig(db string, cfg runConfig) error {
 			"all":    true,
 		},
 		"cockroachdb": {
+			"insert": true,
+			"query":  true,
+			"agg":    true,
+			"update": true,
+			"all":    true,
+		},
+		"cassandra": {
 			"insert": true,
 			"query":  true,
 			"agg":    true,
@@ -439,6 +451,61 @@ func runCockroachDB(ctx context.Context, dsn string, cfg runConfig) []report.Res
 		results = append(results, report.Compute("cockroachdb", "update", cfg.updateIter, 1, durs, total))
 	}
 
+	return results
+}
+
+func runCassandra(ctx context.Context, dsn string, cfg runConfig) []report.Result {
+	bench, err := csbench.New(dsn)
+	if err != nil {
+		log.Fatalf("cassandra connect: %v", err)
+	}
+	defer bench.Close()
+	fmt.Println("cassandra: connected OK")
+
+	if cfg.dryRun {
+		return nil
+	}
+	if cfg.truncate {
+		if err := bench.Truncate(ctx); err != nil {
+			log.Fatalf("cassandra truncate: %v", err)
+		}
+		fmt.Println("cassandra: truncated orders_by_country table")
+	}
+
+	var results []report.Result
+	if cfg.op == "insert" || cfg.op == "all" {
+		fmt.Printf("cassandra: insert %d docs (chunk=%d workers=%d)...\n", cfg.count, cfg.batch, cfg.workers)
+		durs, total, err := bench.Insert(ctx, cfg.count, cfg.batch, cfg.workers)
+		if err != nil {
+			log.Fatalf("cassandra insert: %v", err)
+		}
+		results = append(results, report.Compute("cassandra", "insert", cfg.count, cfg.workers, durs, total))
+		fmt.Printf("cassandra: insert done in %s\n", total.Round(time.Millisecond))
+	}
+	if cfg.op == "query" || cfg.op == "all" {
+		fmt.Printf("cassandra: query %d iterations...\n", cfg.queryIter)
+		durs, total, err := bench.Query(ctx, cfg.queryIter)
+		if err != nil {
+			log.Fatalf("cassandra query: %v", err)
+		}
+		results = append(results, report.Compute("cassandra", "query", cfg.queryIter, 1, durs, total))
+	}
+	if cfg.op == "agg" || cfg.op == "all" {
+		fmt.Printf("cassandra: agg %d iterations...\n", cfg.aggIter)
+		durs, total, err := bench.Agg(ctx, cfg.aggIter)
+		if err != nil {
+			log.Fatalf("cassandra agg: %v", err)
+		}
+		results = append(results, report.Compute("cassandra", "agg", cfg.aggIter, 1, durs, total))
+	}
+	if cfg.op == "update" || cfg.op == "all" {
+		fmt.Printf("cassandra: update %d iterations...\n", cfg.updateIter)
+		durs, total, err := bench.Update(ctx, cfg.updateIter)
+		if err != nil {
+			log.Fatalf("cassandra update: %v", err)
+		}
+		results = append(results, report.Compute("cassandra", "update", cfg.updateIter, 1, durs, total))
+	}
 	return results
 }
 

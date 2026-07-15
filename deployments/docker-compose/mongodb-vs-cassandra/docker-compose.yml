@@ -1,0 +1,39 @@
+services:
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: bench
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-benchpass}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--username", "bench", "--password", "${MONGO_PASSWORD:-benchpass}", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 10s
+      retries: 24
+      start_period: 20s
+
+  cassandra:
+    image: cassandra:5.0
+    environment:
+      CASSANDRA_CLUSTER_NAME: tech-comparison-lab
+      CASSANDRA_NUM_TOKENS: 16
+      MAX_HEAP_SIZE: 1024M
+      HEAP_NEWSIZE: 256M
+    ports:
+      - "${CASSANDRA_PORT:-9042}:9042"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+      - ./cassandra/init.cql:/schema/init.cql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT release_version FROM system.local' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+volumes:
+  mongo_data:
+  cassandra_data:
