@@ -11,3 +11,13 @@ services:
         paths:
           - /
         strip_path: false
+
+# Enable the Prometheus plugin globally so Kong exposes request/latency/upstream
+# metrics on the Admin API at :8001/metrics.
+plugins:
+  - name: prometheus
+    config:
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true

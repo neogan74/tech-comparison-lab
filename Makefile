@@ -18,6 +18,8 @@ EXPERIMENTS := \
 	kafka-vs-pulsar \
 	nats-vs-kafka \
 	rabbitmq-vs-nats \
+	kubernetes-vs-nomad \
+	kubernetes-vs-docker-swarm \
 	k8s-vs-openshift \
 	etcd-vs-consul \
 	argocd-vs-fluxcd \
