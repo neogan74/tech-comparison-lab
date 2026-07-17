@@ -25,6 +25,7 @@ CLEAN=false
 SMOKE_ONLY=false
 KEEP_ENVIRONMENT="${KEEP_ENVIRONMENT:-0}"
 NOMAD_PID=""
+NOMAD_LAUNCH_PID=""
 NOMAD_DATA_DIR=""
 STARTED_NOMAD=false
 
@@ -111,17 +112,39 @@ cleanup() {
   kind delete cluster --name "$K8S_CLUSTER" >/dev/null 2>&1 || true
   if [ "$STARTED_NOMAD" = true ] && [ -n "$NOMAD_PID" ]; then
     if [ "$NOMAD_USE_SUDO" = "1" ]; then
-      sudo kill "$NOMAD_PID" >/dev/null 2>&1 || true
+      sudo kill -INT "$NOMAD_PID" >/dev/null 2>&1 || true
     else
-      kill "$NOMAD_PID" >/dev/null 2>&1 || true
+      kill -INT "$NOMAD_PID" >/dev/null 2>&1 || true
     fi
-    wait "$NOMAD_PID" >/dev/null 2>&1 || true
+    for _ in $(seq 1 50); do
+      if ! nomad_process_running; then break; fi
+      sleep 0.2
+    done
+    if nomad_process_running; then
+      warn "Nomad did not stop gracefully; forcing shutdown."
+      if [ "$NOMAD_USE_SUDO" = "1" ]; then
+        sudo kill -KILL "$NOMAD_PID" >/dev/null 2>&1 || true
+      else
+        kill -KILL "$NOMAD_PID" >/dev/null 2>&1 || true
+      fi
+    fi
+    wait "${NOMAD_LAUNCH_PID:-$NOMAD_PID}" >/dev/null 2>&1 || true
   fi
   if [ -n "$NOMAD_DATA_DIR" ]; then
+    if have_cmd findmnt; then
+      while IFS= read -r mountpoint; do
+        [ -n "$mountpoint" ] || continue
+        if [ "$NOMAD_USE_SUDO" = "1" ]; then
+          sudo umount "$mountpoint" >/dev/null 2>&1 || sudo umount -l "$mountpoint" >/dev/null 2>&1 || true
+        else
+          umount "$mountpoint" >/dev/null 2>&1 || umount -l "$mountpoint" >/dev/null 2>&1 || true
+        fi
+      done < <(findmnt -Rrn -o TARGET "$NOMAD_DATA_DIR" 2>/dev/null | sort -r)
+    fi
     if [ "$NOMAD_USE_SUDO" = "1" ]; then
-      sudo rm -rf "$NOMAD_DATA_DIR"
+      sudo rm -rf "$NOMAD_DATA_DIR" || warn "Could not fully remove Nomad data directory: $NOMAD_DATA_DIR"
     else
-      rm -rf "$NOMAD_DATA_DIR"
+      rm -rf "$NOMAD_DATA_DIR" || warn "Could not fully remove Nomad data directory: $NOMAD_DATA_DIR"
     fi
   fi
 }
@@ -184,12 +207,28 @@ client {
 EOF
   info "Starting single-node Nomad dev agent..."
   if [ "$NOMAD_USE_SUDO" = "1" ]; then
-    sudo -n nomad agent -dev -bind=127.0.0.1 -data-dir="$NOMAD_DATA_DIR/data" -config="$NOMAD_DATA_DIR/nomad.hcl" >"$RESULTS_DIR/nomad.log" 2>&1 &
+    sudo -n sh -c 'echo "$$" > "$1"; shift; exec "$@"' sh \
+      "$NOMAD_DATA_DIR/nomad.pid" \
+      nomad agent -dev -bind=127.0.0.1 -data-dir="$NOMAD_DATA_DIR/data" -config="$NOMAD_DATA_DIR/nomad.hcl" \
+      >"$RESULTS_DIR/nomad.log" 2>&1 &
+    NOMAD_LAUNCH_PID=$!
+    STARTED_NOMAD=true
+    for _ in $(seq 1 50); do
+      if [ -s "$NOMAD_DATA_DIR/nomad.pid" ]; then break; fi
+      sleep 0.1
+    done
+    if [ ! -s "$NOMAD_DATA_DIR/nomad.pid" ]; then
+      sudo kill "$NOMAD_LAUNCH_PID" >/dev/null 2>&1 || true
+      echo "error: Nomad agent did not publish its PID; see $RESULTS_DIR/nomad.log" >&2
+      exit 1
+    fi
+    NOMAD_PID=$(cat "$NOMAD_DATA_DIR/nomad.pid")
   else
     nomad agent -dev -bind=127.0.0.1 -data-dir="$NOMAD_DATA_DIR/data" -config="$NOMAD_DATA_DIR/nomad.hcl" >"$RESULTS_DIR/nomad.log" 2>&1 &
+    NOMAD_PID=$!
+    NOMAD_LAUNCH_PID=$NOMAD_PID
+    STARTED_NOMAD=true
   fi
-  NOMAD_PID=$!
-  STARTED_NOMAD=true
   for _ in $(seq 1 60); do
     if nomad_ready; then return; fi
     if ! nomad_process_running; then
