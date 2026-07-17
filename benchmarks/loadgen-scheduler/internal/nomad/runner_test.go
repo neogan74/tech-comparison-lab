@@ -17,6 +17,7 @@ func TestRunnerLifecycle(t *testing.T) {
 	replicas := 0
 	generation := 0
 	driver := ""
+	memoryMB := 0
 
 	allocations := func() []allocation {
 		values := make([]allocation, 0, replicas)
@@ -41,7 +42,10 @@ func TestRunnerLifecycle(t *testing.T) {
 					TaskGroups []struct {
 						Count int `json:"Count"`
 						Tasks []struct {
-							Driver string `json:"Driver"`
+							Driver    string `json:"Driver"`
+							Resources struct {
+								MemoryMB int `json:"MemoryMB"`
+							} `json:"Resources"`
 						} `json:"Tasks"`
 					} `json:"TaskGroups"`
 				} `json:"Job"`
@@ -53,6 +57,7 @@ func TestRunnerLifecycle(t *testing.T) {
 			}
 			replicas = payload.Job.TaskGroups[0].Count
 			driver = payload.Job.TaskGroups[0].Tasks[0].Driver
+			memoryMB = payload.Job.TaskGroups[0].Tasks[0].Resources.MemoryMB
 			generation++
 			_ = json.NewEncoder(writer).Encode(map[string]int{"EvalIndex": generation})
 		case request.Method == http.MethodGet && request.URL.Path == "/v1/job/scheduler-bench/allocations":
@@ -79,6 +84,9 @@ func TestRunnerLifecycle(t *testing.T) {
 	}
 	if driver != "raw_exec" {
 		t.Fatalf("driver = %q, want raw_exec", driver)
+	}
+	if memoryMB < 10 {
+		t.Fatalf("MemoryMB = %d, want at least 10 for Nomad validation", memoryMB)
 	}
 	if _, err := runner.Scale(ctx, 3); err != nil {
 		t.Fatalf("Scale: %v", err)

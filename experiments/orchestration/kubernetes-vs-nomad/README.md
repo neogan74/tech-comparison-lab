@@ -18,6 +18,7 @@ Each operation is repeated independently. The report includes p50, p95, p99, mea
 - Kubernetes: a two-node kind cluster (one control plane and one worker).
 - Nomad: a single-node native `nomad agent -dev` client/server.
 - Workload: a preloaded `pause:3.10` container on Kubernetes and a minimal `raw_exec` sleep task on Nomad.
+- Resources: 10 millicpu and 10 MiB reserved per instance on both platforms (the minimum memory accepted by Nomad 1.11).
 - Benchmark: `benchmarks/loadgen-scheduler`, using Kubernetes APIs and the Nomad HTTP API directly.
 
 This is a local scheduler responsiveness comparison, not a production architecture comparison. A kind control plane and a Nomad dev agent differ in isolation, topology, and task driver startup; the results do not measure HA behavior, network storage, service discovery, or multi-node bin-packing.

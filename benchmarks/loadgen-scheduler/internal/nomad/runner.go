@@ -118,7 +118,7 @@ func (runner *Runner) register(ctx context.Context, replicas int) error {
 					"command": "/bin/sh",
 					"args":    []string{"-c", "while true; do sleep 60; done"},
 				},
-				"Resources": map[string]any{"CPU": 10, "MemoryMB": 8},
+				"Resources": map[string]any{"CPU": 10, "MemoryMB": 10},
 			}},
 		}},
 	}

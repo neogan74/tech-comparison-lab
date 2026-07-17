@@ -177,7 +177,7 @@ func deployment(namespace string, replicas int32) *appsv1.Deployment {
 					Containers: []corev1.Container{{
 						Name: "bench", Image: workloadImage, ImagePullPolicy: corev1.PullIfNotPresent,
 						Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{
-							corev1.ResourceCPU: resource.MustParse("10m"), corev1.ResourceMemory: resource.MustParse("8Mi"),
+							corev1.ResourceCPU: resource.MustParse("10m"), corev1.ResourceMemory: resource.MustParse("10Mi"),
 						}},
 					}},
 				},

@@ -18,7 +18,7 @@ Each operation is repeated independently. Reports include p50, p95, p99, mean, m
 - Kubernetes: a two-node kind cluster (one control plane and one worker).
 - Docker Swarm: the current Docker Engine configured as a single-node manager when Swarm is not already active.
 - Workload: `registry.k8s.io/pause:3.10`, pre-pulled and loaded into kind.
-- Resources: 10 millicpu and 8 MiB reserved per instance on both platforms.
+- Resources: 10 millicpu and 10 MiB reserved per instance on both platforms.
 - Benchmark: `benchmarks/loadgen-scheduler`, using Kubernetes and Docker Engine APIs directly.
 
 This is a local scheduler-responsiveness comparison, not a production architecture comparison. A two-node kind cluster and a single-node Swarm manager have different control-plane topology and container-network paths. Results do not measure HA, multi-node placement, overlay-network throughput, persistent storage, rolling updates, or application-level recovery.

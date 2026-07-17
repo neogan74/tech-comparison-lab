@@ -220,7 +220,7 @@ func newServiceSpec(replicas int) serviceSpec {
 		TaskTemplate: taskTemplate{
 			ContainerSpec: containerSpec{Image: workloadImage},
 			RestartPolicy: restartPolicy{Condition: "any"},
-			Resources:     resources{Reservations: resourceLimit{NanoCPUs: 10_000_000, MemoryBytes: 8 * 1024 * 1024}},
+			Resources:     resources{Reservations: resourceLimit{NanoCPUs: 10_000_000, MemoryBytes: 10 * 1024 * 1024}},
 		},
 		Mode: serviceMode{Replicated: replicatedMode{Replicas: replicas}},
 	}
