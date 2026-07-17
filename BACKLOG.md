@@ -12,6 +12,8 @@
 - Apache Kafka vs Apache Pulsar
 - NATS vs Apache Kafka
 - RabbitMQ vs NATS
+- Kubernetes vs Nomad
+- Kubernetes vs Docker Swarm
 - Kubernetes vs OpenShift (kind)
 - Redis vs Memcached
 - Redis vs Dragonfly
@@ -50,8 +52,8 @@ The following experiments are planned but not yet implemented. Choose from this 
 - ~~Apache Kafka vs Apache Pulsar — streaming comparison~~ ✅
 
 **Kubernetes / Platform:**
-- Kubernetes vs Nomad — scheduler comparison
-- Kubernetes vs Docker Swarm — orchestration
+- ~~Kubernetes vs Nomad — scheduler comparison~~ ✅
+- ~~Kubernetes vs Docker Swarm — orchestration~~ ✅
 - ~~Argo CD vs Flux CD — GitOps comparison~~ ✅
 - Istio vs Linkerd — service mesh
 - Traefik vs NGINX — reverse proxy

@@ -1,6 +1,7 @@
 services:
   # Kong API gateway — DB-less (declarative) mode.
   # Proxies every path to the shared bench-api running on the host (:8080).
+  # The Prometheus plugin (see kong/kong.yml) exposes metrics at :8001/metrics.
   kong:
     image: kong:3.9
     environment:
@@ -13,7 +14,7 @@ services:
       KONG_NGINX_WORKER_PROCESSES: "auto"
     ports:
       - "8000:8000"   # proxy
-      - "8001:8001"   # admin API
+      - "8001:8001"   # admin API + /metrics
     volumes:
       - ./kong:/kong:ro
     extra_hosts:
@@ -25,18 +26,27 @@ services:
       retries: 10
 
   # Traefik API gateway — file provider (static route to the same upstream).
+  # Prometheus metrics + dashboard are served on the internal "traefik"
+  # entrypoint (:8080), published to the host on :8082.
   traefik:
     image: traefik:v3.3
     command:
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.traefik.address=:8080"
       - "--providers.file.filename=/etc/traefik/dynamic.yml"
       - "--providers.file.watch=true"
-      - "--api.dashboard=false"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entrypoint=traefik"
+      - "--metrics.prometheus.addentrypointslabels=true"
+      - "--metrics.prometheus.addserviceslabels=true"
       - "--ping=true"
       - "--log.level=ERROR"
       - "--accesslog=false"
     ports:
       - "8081:80"     # proxy
+      - "8082:8080"   # dashboard (/dashboard/) + /metrics
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
     extra_hosts:
@@ -46,3 +56,29 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Prometheus scrapes both gateways (and the backend) — see prometheus.yml.
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9097:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - kong
+      - traefik
+
+  # Grafana with a pre-provisioned Prometheus datasource + gateway dashboard.
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3005:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus

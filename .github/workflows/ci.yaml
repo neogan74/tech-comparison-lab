@@ -639,6 +639,102 @@ jobs:
           SMOKE_COUNT: 5000
         run: bash ./scripts/smoke-rabbitmq-vs-nats.sh
 
+  validate-kubernetes-vs-nomad:
+    name: Validate Kubernetes vs Nomad experiment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-scheduler/go.mod
+
+      - name: Run validation script
+        run: bash ./scripts/validate-kubernetes-vs-nomad.sh
+
+  smoke-kubernetes-vs-nomad:
+    name: Smoke Kubernetes vs Nomad experiment
+    runs-on: ubuntu-latest
+    needs: validate-kubernetes-vs-nomad
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-scheduler/go.mod
+
+      - name: Set up kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+
+      - name: Install Nomad
+        env:
+          NOMAD_VERSION: 1.11.3
+        run: |
+          curl -fsSLo /tmp/nomad.zip "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_linux_amd64.zip"
+          curl -fsSLo /tmp/nomad_SHA256SUMS "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_SHA256SUMS"
+          grep "nomad_${NOMAD_VERSION}_linux_amd64.zip" /tmp/nomad_SHA256SUMS | awk '{print $1 "  /tmp/nomad.zip"}' | sha256sum --check
+          unzip -q /tmp/nomad.zip -d /tmp/nomad-bin
+          sudo install /tmp/nomad-bin/nomad /usr/local/bin/nomad
+          nomad version
+
+      - name: Run smoke benchmark
+        env:
+          SMOKE_ROUNDS: 1
+          SMOKE_REPLICAS: 3
+          NOMAD_USE_SUDO: 1
+        run: bash ./scripts/smoke-kubernetes-vs-nomad.sh
+
+  validate-kubernetes-vs-docker-swarm:
+    name: Validate Kubernetes vs Docker Swarm experiment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-scheduler/go.mod
+
+      - name: Run validation script
+        run: bash ./scripts/validate-kubernetes-vs-docker-swarm.sh
+
+  smoke-kubernetes-vs-docker-swarm:
+    name: Smoke Kubernetes vs Docker Swarm experiment
+    runs-on: ubuntu-latest
+    needs: validate-kubernetes-vs-docker-swarm
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-scheduler/go.mod
+
+      - name: Set up kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+
+      - name: Run smoke benchmark
+        env:
+          SMOKE_ROUNDS: 1
+          SMOKE_REPLICAS: 3
+        run: bash ./scripts/smoke-kubernetes-vs-docker-swarm.sh
+
   validate-k8s-vs-openshift:
     name: Validate Kubernetes vs OpenShift experiment
     runs-on: ubuntu-latest
