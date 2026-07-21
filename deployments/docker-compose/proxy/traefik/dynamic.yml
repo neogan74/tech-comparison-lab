@@ -1,0 +1,16 @@
+# Traefik dynamic configuration (file provider).
+# Catch-all router forwarding every path to the shared bench-api on the host.
+http:
+  routers:
+    bench-api:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: bench-api
+
+  services:
+    bench-api:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://host.docker.internal:8080"
