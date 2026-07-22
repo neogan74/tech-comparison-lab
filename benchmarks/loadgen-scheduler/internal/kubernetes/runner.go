@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/retry"
 )
 
 const (
@@ -85,13 +86,17 @@ func (runner *Runner) Deploy(ctx context.Context, replicas int) (time.Duration, 
 }
 
 func (runner *Runner) Scale(ctx context.Context, replicas int) (time.Duration, error) {
-	value, err := runner.client.AppsV1().Deployments(runner.namespace).Get(ctx, workloadName, metav1.GetOptions{})
-	if err != nil {
-		return 0, err
-	}
-	value.Spec.Replicas = int32ptr(int32(replicas))
 	start := time.Now()
-	if _, err := runner.client.AppsV1().Deployments(runner.namespace).Update(ctx, value, metav1.UpdateOptions{}); err != nil {
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		value, err := runner.client.AppsV1().Deployments(runner.namespace).Get(ctx, workloadName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		value.Spec.Replicas = int32ptr(int32(replicas))
+		_, err = runner.client.AppsV1().Deployments(runner.namespace).Update(ctx, value, metav1.UpdateOptions{})
+		return err
+	})
+	if err != nil {
 		return 0, err
 	}
 	runner.replicas = int32(replicas)
