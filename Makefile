@@ -23,7 +23,8 @@ EXPERIMENTS := \
 	k8s-vs-openshift \
 	etcd-vs-consul \
 	argocd-vs-fluxcd \
-	prometheus-vs-victoriametrics
+	prometheus-vs-victoriametrics \
+	zabbix-vs-prometheus
 
 .PHONY: \
 	help \

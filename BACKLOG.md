@@ -20,6 +20,7 @@
 - etcd vs Consul
 - Argo CD vs Flux CD (kind)
 - Prometheus vs VictoriaMetrics
+- Zabbix vs Prometheus
 - Kong vs Traefik
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
@@ -45,7 +46,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 
 **Cache / KV:**
 - ~~Redis vs Memcached — cache performance~~ ✅
-- etcd vs Consul — KV store consensus
+- ~~etcd vs Consul — KV store consensus~~ ✅
 - ~~Redis vs Dragonfly — Redis alternative~~ ✅
 
 **Messaging / Streaming:**
@@ -66,7 +67,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 - ~~Prometheus vs VictoriaMetrics — metrics storage~~ ✅
 - Loki vs Elasticsearch — log storage
 - Jaeger vs Zipkin — distributed tracing
-- Zabbix vs Prometheus — monitoring systems
+- ~~Zabbix vs Prometheus — monitoring systems~~ ✅
 
 **Definition of Done for New Experiments:**
 - [ ] Create benchmark in `benchmarks/loadgen-*/`

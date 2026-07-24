@@ -23,6 +23,7 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | etcd vs Consul | smoke-tested | CI validates `loadgen-kv`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Argo CD vs Flux CD | smoke-tested (kind) | CI validates `loadgen-gitops`, `run.sh`, and runs kind-only smoke |
 | Prometheus vs VictoriaMetrics | smoke-tested | CI validates `loadgen-observability`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
+| Zabbix vs Prometheus | smoke-tested | CI validates `loadgen-monitoring`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kong vs Traefik | smoke-tested | CI validates `loadgen-http`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 
 ## Repository Commands
