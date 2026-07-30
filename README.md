@@ -25,6 +25,7 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | Prometheus vs VictoriaMetrics | smoke-tested | CI validates `loadgen-observability`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Zabbix vs Prometheus | smoke-tested | CI validates `loadgen-monitoring`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Kong vs Traefik | smoke-tested | CI validates `loadgen-http`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
+| Traefik vs NGINX | smoke-tested | CI validates `loadgen-http`, `bench-api`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 
 ## Repository Commands
 

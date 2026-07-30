@@ -10,6 +10,7 @@ EXPERIMENTS := \
 	grpc-vs-rest \
 	graphql-vs-rest \
 	kong-vs-traefik \
+	traefik-vs-nginx \
 	redis-vs-valkey \
 	redis-vs-memcached \
 	redis-vs-dragonfly \
