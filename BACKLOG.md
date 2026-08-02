@@ -21,6 +21,7 @@
 - Argo CD vs Flux CD (kind)
 - Prometheus vs VictoriaMetrics
 - Zabbix vs Prometheus
+- Istio vs Linkerd (kind)
 - Kong vs Traefik
 - Traefik vs NGINX
 
@@ -57,7 +58,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 - ~~Kubernetes vs Nomad — scheduler comparison~~ ✅
 - ~~Kubernetes vs Docker Swarm — orchestration~~ ✅
 - ~~Argo CD vs Flux CD — GitOps comparison~~ ✅
-- Istio vs Linkerd — service mesh
+- ~~Istio vs Linkerd — service mesh~~ ✅
 - ~~Traefik vs NGINX — reverse proxy~~ ✅
 
 **API / Networking:**

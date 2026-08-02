@@ -1004,3 +1004,57 @@ jobs:
           SMOKE_SERIES: 200
           SMOKE_ITER: 1
         run: bash ./scripts/smoke-zabbix-vs-prometheus.sh
+
+  validate-istio-vs-linkerd:
+    name: Validate Istio vs Linkerd experiment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-mesh/go.mod
+
+      - name: Run validation script
+        run: bash ./scripts/validate-istio-vs-linkerd.sh
+
+  smoke-istio-vs-linkerd:
+    name: Smoke Istio vs Linkerd experiment
+    runs-on: ubuntu-latest
+    needs: validate-istio-vs-linkerd
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-mesh/go.mod
+
+      - name: Set up kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+
+      - name: Install istioctl
+        run: |
+          curl -sL https://istio.io/downloadIstio | ISTIO_VERSION=1.24.2 sh -
+          echo "$PWD/istio-1.24.2/bin" >> "$GITHUB_PATH"
+
+      - name: Install Linkerd CLI
+        run: |
+          curl -sL https://run.linkerd.io/install | sh
+          echo "$HOME/.linkerd2/bin" >> "$GITHUB_PATH"
+
+      - name: Run smoke benchmark
+        env:
+          SMOKE_REPLICAS: 1
+          SMOKE_ROUNDS: 1
+          SMOKE_COUNT: 200
+          SMOKE_WORKERS: 5
+        run: bash ./scripts/smoke-istio-vs-linkerd.sh

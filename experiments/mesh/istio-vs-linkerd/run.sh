@@ -34,6 +34,7 @@ SMOKE_ROUNDS="${SMOKE_ROUNDS:-1}"
 SMOKE_COUNT="${SMOKE_COUNT:-200}"
 SMOKE_WORKERS="${SMOKE_WORKERS:-5}"
 ISTIO_VERSION="${ISTIO_VERSION:-1.24.2}"
+GATEWAY_API_VERSION="${GATEWAY_API_VERSION:-1.2.1}"
 SKIP_BUILD="${SKIP_BUILD:-false}"
 
 BASELINE_NS="bench-baseline"
@@ -68,8 +69,9 @@ Options:
 Environment overrides:
   REPLICAS ROUNDS COUNT WORKERS
   SMOKE_REPLICAS SMOKE_ROUNDS SMOKE_COUNT SMOKE_WORKERS
-  ISTIO_VERSION   Istio release (default: 1.24.2)
-  SKIP_BUILD=true skip go build if the binary already exists
+  ISTIO_VERSION        Istio release (default: 1.24.2)
+  GATEWAY_API_VERSION  Gateway API CRD release for Linkerd (default: 1.2.1)
+  SKIP_BUILD=true      skip go build if the binary already exists
 EOF
       exit 0
       ;;
@@ -132,6 +134,10 @@ install_istio() {
 }
 
 install_linkerd() {
+  log "Installing Gateway API CRDs (Linkerd prerequisite)..."
+  kubectl --context "$K8S_CONTEXT" apply --server-side -f \
+    "https://github.com/kubernetes-sigs/gateway-api/releases/download/v${GATEWAY_API_VERSION}/standard-install.yaml"
+
   log "Installing Linkerd (CRDs + control plane)..."
   linkerd install --crds | kubectl --context "$K8S_CONTEXT" apply -f -
   linkerd install | kubectl --context "$K8S_CONTEXT" apply -f -

@@ -25,7 +25,8 @@ EXPERIMENTS := \
 	etcd-vs-consul \
 	argocd-vs-fluxcd \
 	prometheus-vs-victoriametrics \
-	zabbix-vs-prometheus
+	zabbix-vs-prometheus \
+	istio-vs-linkerd
 
 .PHONY: \
 	help \

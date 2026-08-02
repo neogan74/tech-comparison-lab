@@ -1,0 +1,82 @@
+{
+  "mesh": "linkerd",
+  "timestamp": "2026-08-02T03:08:41.806396Z",
+  "results": [
+    {
+      "mesh": "linkerd",
+      "op": "inject:ready-1r",
+      "count": 1,
+      "p50_ms": 2648.654,
+      "p95_ms": 2648.654,
+      "p99_ms": 2648.654,
+      "mean_ms": 2648.654,
+      "min_ms": 2648.654,
+      "max_ms": 2648.654
+    },
+    {
+      "mesh": "linkerd",
+      "op": "footprint:control-plane-pods",
+      "value": 3,
+      "unit": "pods"
+    },
+    {
+      "mesh": "linkerd",
+      "op": "footprint:control-plane-cpu-req",
+      "unit": "millicores"
+    },
+    {
+      "mesh": "linkerd",
+      "op": "footprint:control-plane-mem-req",
+      "unit": "MiB"
+    },
+    {
+      "mesh": "linkerd",
+      "op": "footprint:sidecar-containers",
+      "unit": "containers"
+    },
+    {
+      "mesh": "linkerd",
+      "op": "footprint:sidecar-cpu-req",
+      "unit": "millicores"
+    },
+    {
+      "mesh": "linkerd",
+      "op": "footprint:sidecar-mem-req",
+      "unit": "MiB"
+    },
+    {
+      "mesh": "linkerd",
+      "op": "data-plane:meshed:latency",
+      "count": 200,
+      "p50_ms": 0.8,
+      "p95_ms": 1.79,
+      "p99_ms": 4.994,
+      "mean_ms": 0.993,
+      "min_ms": 0.517,
+      "max_ms": 5.008
+    },
+    {
+      "mesh": "linkerd",
+      "op": "data-plane:meshed:throughput",
+      "value": 4859.125803908958,
+      "unit": "req/s"
+    },
+    {
+      "mesh": "linkerd",
+      "op": "data-plane:baseline:latency",
+      "count": 200,
+      "p50_ms": 0.831,
+      "p95_ms": 2.539,
+      "p99_ms": 4.777,
+      "mean_ms": 1.066,
+      "min_ms": 0.516,
+      "max_ms": 4.939
+    },
+    {
+      "mesh": "linkerd",
+      "op": "data-plane:baseline:throughput",
+      "value": 4673.424922024489,
+      "unit": "req/s"
+    }
+  ]
+}
