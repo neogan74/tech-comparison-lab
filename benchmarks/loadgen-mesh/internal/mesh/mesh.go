@@ -167,9 +167,19 @@ func RunFootprint(ctx context.Context, cs *kubernetes.Clientset, s Spec, ns stri
 		return nil, fmt.Errorf("list echo pods: %w", err)
 	}
 	if len(pods.Items) > 0 {
+		pod := pods.Items[0]
 		var sidecars []corev1.Container
-		for _, c := range pods.Items[0].Spec.Containers {
+		// Old-style injection adds the proxy as a regular container.
+		for _, c := range pod.Spec.Containers {
 			if c.Name != s.AppContainer {
+				sidecars = append(sidecars, c)
+			}
+		}
+		// Modern Istio/Linkerd use native sidecars: the proxy is an
+		// initContainer with restartPolicy=Always. One-shot init containers
+		// (iptables setup) are excluded from the steady-state footprint.
+		for _, c := range pod.Spec.InitContainers {
+			if c.RestartPolicy != nil && *c.RestartPolicy == corev1.ContainerRestartPolicyAlways {
 				sidecars = append(sidecars, c)
 			}
 		}
