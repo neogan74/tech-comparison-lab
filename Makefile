@@ -10,6 +10,7 @@ EXPERIMENTS := \
 	grpc-vs-rest \
 	graphql-vs-rest \
 	kong-vs-traefik \
+	traefik-vs-nginx \
 	redis-vs-valkey \
 	redis-vs-memcached \
 	redis-vs-dragonfly \
@@ -24,7 +25,8 @@ EXPERIMENTS := \
 	etcd-vs-consul \
 	argocd-vs-fluxcd \
 	prometheus-vs-victoriametrics \
-	zabbix-vs-prometheus
+	zabbix-vs-prometheus \
+	istio-vs-linkerd
 
 .PHONY: \
 	help \
