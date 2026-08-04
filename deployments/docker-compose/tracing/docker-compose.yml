@@ -1,0 +1,23 @@
+services:
+  # Jaeger all-in-one. Its Zipkin-compatible collector (COLLECTOR_ZIPKIN_HOST_PORT)
+  # accepts the same Zipkin v2 JSON the loadgen posts to Zipkin, so both backends
+  # share one ingest encoder. Query API is on 16686, ingest on 9411.
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    container_name: tracing-jaeger
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+      SPAN_STORAGE_TYPE: memory
+    ports:
+      - "16686:16686"  # query API + UI (benchmark query target)
+      - "9411:9411"    # Zipkin-format collector (benchmark ingest target)
+
+  # OpenZipkin, in-memory storage. Ingest + query share port 9411 (mapped to
+  # host 9412 to avoid colliding with Jaeger's collector).
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    container_name: tracing-zipkin
+    environment:
+      STORAGE_TYPE: mem
+    ports:
+      - "9412:9411"    # ingest + query (benchmark target)
