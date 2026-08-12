@@ -24,6 +24,7 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | Argo CD vs Flux CD | smoke-tested (kind) | CI validates `loadgen-gitops`, `run.sh`, and runs kind-only smoke |
 | Prometheus vs VictoriaMetrics | smoke-tested | CI validates `loadgen-observability`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Zabbix vs Prometheus | smoke-tested | CI validates `loadgen-monitoring`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
+| Jaeger vs Zipkin | smoke-tested | CI validates `loadgen-tracing`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Istio vs Linkerd | smoke-tested (kind) | CI validates `loadgen-mesh`, `run.sh`, and runs an end-to-end kind smoke (installs both meshes) |
 | Kong vs Traefik | smoke-tested | CI validates `loadgen-http`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Traefik vs NGINX | smoke-tested | CI validates `loadgen-http`, `bench-api`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
