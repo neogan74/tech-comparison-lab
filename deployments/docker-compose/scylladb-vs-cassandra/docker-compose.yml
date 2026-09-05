@@ -1,0 +1,43 @@
+services:
+  cassandra:
+    image: cassandra:5.0
+    environment:
+      CASSANDRA_CLUSTER_NAME: tech-comparison-lab
+      CASSANDRA_NUM_TOKENS: 16
+      MAX_HEAP_SIZE: 1024M
+      HEAP_NEWSIZE: 256M
+    ports:
+      - "${CASSANDRA_PORT:-9042}:9042"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+      - ./cassandra/init.cql:/schema/init.cql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT release_version FROM system.local' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  scylladb:
+    image: scylladb/scylla:5.4
+    command: >
+      --smp 1
+      --memory 750M
+      --overprovisioned 1
+      --developer-mode 1
+      --api-address 0.0.0.0
+    ports:
+      - "${SCYLLA_PORT:-9043}:9042"
+    volumes:
+      - scylla_data:/var/lib/scylla
+      - ./scylladb/init.cql:/schema/init.cql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'SELECT release_version FROM system.local' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  cassandra_data:
+  scylla_data:

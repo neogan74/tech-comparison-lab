@@ -7,6 +7,7 @@ EXPERIMENTS := \
 	mysql-vs-postgres \
 	postgres-vs-cockroachdb \
 	mongodb-vs-cassandra \
+	scylladb-vs-cassandra \
 	grpc-vs-rest \
 	graphql-vs-rest \
 	kong-vs-traefik \

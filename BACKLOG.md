@@ -27,6 +27,9 @@
 - Jaeger vs Zipkin
 - Loki vs Elasticsearch
 - Envoy vs NGINX
+- MySQL vs PostgreSQL
+- PostgreSQL vs CockroachDB
+- ScyllaDB vs Cassandra
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
 
@@ -48,6 +51,8 @@ The following experiments are planned but not yet implemented. Choose from this 
 - ~~PostgreSQL vs CockroachDB — distributed SQL comparison~~ ✅
 - ~~MySQL vs PostgreSQL — OLTP workloads~~ ✅
 - ~~MongoDB vs Cassandra — distributed NoSQL~~ ✅
+- ~~ScyllaDB vs Cassandra — distributed NoSQL~~ ✅
+- ClickHouse vs Snowflake — analytics (cloud-only, needs Snowflake account)
 
 **Cache / KV:**
 - ~~Redis vs Memcached — cache performance~~ ✅
