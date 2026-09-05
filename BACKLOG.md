@@ -23,6 +23,7 @@
 - Zabbix vs Prometheus
 - Istio vs Linkerd (kind)
 - Kong vs Traefik
+- Kong vs Tyk
 - Traefik vs NGINX
 - Jaeger vs Zipkin
 - Loki vs Elasticsearch

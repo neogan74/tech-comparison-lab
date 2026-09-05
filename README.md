@@ -31,6 +31,7 @@ Main focus is compare technologies in terms of performance, scalability, and eas
 | Loki vs Elasticsearch | smoke-tested | CI validates `loadgen-logs`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Istio vs Linkerd | smoke-tested (kind) | CI validates `loadgen-mesh`, `run.sh`, and runs an end-to-end kind smoke (installs both meshes) |
 | Kong vs Traefik | smoke-tested | CI validates `loadgen-http`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
+| Kong vs Tyk | smoke-tested | CI validates `loadgen-http`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Traefik vs NGINX | smoke-tested | CI validates `loadgen-http`, `bench-api`, `run.sh`, Docker Compose config, and runs end-to-end smoke |
 | Envoy vs NGINX | smoke-tested | CI validates `loadgen-http`, `bench-api`, `run.sh`, the Envoy bootstrap, Docker Compose config, and runs end-to-end smoke |
 
@@ -149,6 +150,8 @@ Here is the list of technologies to compare:
 - GraphQL vs REST
 
 - Kong vs Traefik
+
+- Kong vs Tyk
 
 - Kong vs Apigee
 

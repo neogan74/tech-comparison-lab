@@ -1,0 +1,25 @@
+{
+  "name": "bench-api",
+  "api_id": "1",
+  "org_id": "1",
+  "use_keyless": true,
+  "active": true,
+  "protocol": "http",
+  "definition": {
+    "location": "header",
+    "key": "x-api-version"
+  },
+  "version_data": {
+    "not_versioned": true,
+    "versions": {
+      "Default": {
+        "name": "Default"
+      }
+    }
+  },
+  "proxy": {
+    "listen_path": "/",
+    "target_url": "http://host.docker.internal:8080",
+    "strip_listen_path": false
+  }
+}

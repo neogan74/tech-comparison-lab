@@ -11,6 +11,7 @@ EXPERIMENTS := \
 	grpc-vs-rest \
 	graphql-vs-rest \
 	kong-vs-traefik \
+	kong-vs-tyk \
 	traefik-vs-nginx \
 	envoy-vs-nginx \
 	redis-vs-valkey \
