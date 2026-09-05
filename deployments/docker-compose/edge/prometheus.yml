@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 2s
+  evaluation_interval: 2s
+
+scrape_configs:
+  # NGINX stub_status is exported in Prometheus format by the sidecar.
+  - job_name: nginx
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["nginx-exporter:9113"]
+
+  # Envoy exposes Prometheus metrics on the admin interface (:9901).
+  - job_name: envoy
+    metrics_path: /stats/prometheus
+    static_configs:
+      - targets: ["envoy:9901"]
+
+  # The shared backend runs on the host.
+  - job_name: bench-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8080"]

@@ -26,6 +26,7 @@
 - Traefik vs NGINX
 - Jaeger vs Zipkin
 - Loki vs Elasticsearch
+- Envoy vs NGINX
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
 
@@ -66,6 +67,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 **API / Networking:**
 - ~~GraphQL vs REST — API query models~~ ✅
 - ~~Kong vs Traefik — API gateway~~ ✅
+- ~~Envoy vs NGINX — L7 reverse proxy~~ ✅
 
 **Observability:**
 - ~~Prometheus vs VictoriaMetrics — metrics storage~~ ✅

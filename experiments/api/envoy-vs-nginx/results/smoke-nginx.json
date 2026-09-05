@@ -1,0 +1,51 @@
+{
+  "run_id": "rest-1788592631",
+  "timestamp": "2026-09-05T07:17:11Z",
+  "results": [
+    {
+      "protocol": "rest",
+      "op": "echo",
+      "count": 1000,
+      "workers": 10,
+      "p50_ms": 1.821,
+      "p95_ms": 3.496,
+      "p99_ms": 5.718,
+      "min_ms": 1.081,
+      "max_ms": 10.589,
+      "mean_ms": 2.057436,
+      "throughput_rps": 4835.950463483054,
+      "errors": 0,
+      "total_ms": 206
+    },
+    {
+      "protocol": "rest",
+      "op": "get-user",
+      "count": 1000,
+      "workers": 10,
+      "p50_ms": 0.746,
+      "p95_ms": 1.243,
+      "p99_ms": 2.937,
+      "min_ms": 0.41,
+      "max_ms": 3.296,
+      "mean_ms": 0.8199690000000001,
+      "throughput_rps": 12141.718084920318,
+      "errors": 0,
+      "total_ms": 82
+    },
+    {
+      "protocol": "rest",
+      "op": "create-order",
+      "count": 1000,
+      "workers": 10,
+      "p50_ms": 1.711,
+      "p95_ms": 2.491,
+      "p99_ms": 4.499,
+      "min_ms": 0.941,
+      "max_ms": 5.899,
+      "mean_ms": 1.809124,
+      "throughput_rps": 5511.651181397904,
+      "errors": 0,
+      "total_ms": 181
+    }
+  ]
+}

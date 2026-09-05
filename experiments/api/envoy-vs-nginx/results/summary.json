@@ -1,0 +1,118 @@
+{
+  "schema_version": "results-summary/v1",
+  "experiment": {
+    "id": "envoy-vs-nginx",
+    "name": "Envoy vs NGINX",
+    "category": "api",
+    "path": "experiments/api/envoy-vs-nginx"
+  },
+  "run_id": "rest-1788592825",
+  "timestamp": "2026-09-05T07:20:25Z",
+  "mode": "full",
+  "config": {
+    "count": 100000,
+    "workers": 50
+  },
+  "sources": [
+    {
+      "name": "nginx",
+      "file": "results/nginx.json"
+    },
+    {
+      "name": "envoy",
+      "file": "results/envoy.json"
+    }
+  ],
+  "results": [
+    {
+      "protocol": "rest",
+      "op": "echo",
+      "count": 100000,
+      "workers": 50,
+      "p50_ms": 18.298,
+      "p95_ms": 79.156,
+      "p99_ms": 973.464,
+      "min_ms": 1.299,
+      "max_ms": 10007.334,
+      "mean_ms": 46.556340989999995,
+      "throughput_rps": 855.499706035745,
+      "errors": 20339,
+      "total_ms": 93116
+    },
+    {
+      "protocol": "rest",
+      "op": "get-user",
+      "count": 100000,
+      "workers": 50,
+      "p50_ms": 2.044,
+      "p95_ms": 3.798,
+      "p99_ms": 6.778,
+      "min_ms": 0.697,
+      "max_ms": 220.368,
+      "mean_ms": 2.4394001199999997,
+      "throughput_rps": 20487.304191120227,
+      "errors": 0,
+      "total_ms": 4881
+    },
+    {
+      "protocol": "rest",
+      "op": "create-order",
+      "count": 100000,
+      "workers": 50,
+      "p50_ms": 14.258,
+      "p95_ms": 74.66,
+      "p99_ms": 1171.543,
+      "min_ms": 0.873,
+      "max_ms": 9672.42,
+      "mean_ms": 47.7986929,
+      "throughput_rps": 954.3331524779665,
+      "errors": 8765,
+      "total_ms": 95600
+    },
+    {
+      "protocol": "rest",
+      "op": "echo",
+      "count": 100000,
+      "workers": 50,
+      "p50_ms": 21.109,
+      "p95_ms": 98.051,
+      "p99_ms": 1131.666,
+      "min_ms": 1.106,
+      "max_ms": 10009.684,
+      "mean_ms": 56.9360932,
+      "throughput_rps": 720.2306059487252,
+      "errors": 17979,
+      "total_ms": 113881
+    },
+    {
+      "protocol": "rest",
+      "op": "get-user",
+      "count": 100000,
+      "workers": 50,
+      "p50_ms": 1.731,
+      "p95_ms": 3.439,
+      "p99_ms": 6.962,
+      "min_ms": 0.601,
+      "max_ms": 81.517,
+      "mean_ms": 2.00840906,
+      "throughput_rps": 24883.385828800492,
+      "errors": 0,
+      "total_ms": 4018
+    },
+    {
+      "protocol": "rest",
+      "op": "create-order",
+      "count": 100000,
+      "workers": 50,
+      "p50_ms": 14.575,
+      "p95_ms": 191.574,
+      "p99_ms": 1256.912,
+      "min_ms": 1.077,
+      "max_ms": 2254.844,
+      "mean_ms": 59.33411367,
+      "throughput_rps": 821.3444399653976,
+      "errors": 2521,
+      "total_ms": 118682
+    }
+  ]
+}
