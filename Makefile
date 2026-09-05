@@ -27,7 +27,8 @@ EXPERIMENTS := \
 	prometheus-vs-victoriametrics \
 	zabbix-vs-prometheus \
 	istio-vs-linkerd \
-	jaeger-vs-zipkin
+	jaeger-vs-zipkin \
+	loki-vs-elasticsearch
 
 .PHONY: \
 	help \

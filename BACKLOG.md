@@ -25,6 +25,7 @@
 - Kong vs Traefik
 - Traefik vs NGINX
 - Jaeger vs Zipkin
+- Loki vs Elasticsearch
 
 All experiments have CI validation, smoke tests, and follow the established pattern.
 
@@ -68,7 +69,7 @@ The following experiments are planned but not yet implemented. Choose from this 
 
 **Observability:**
 - ~~Prometheus vs VictoriaMetrics — metrics storage~~ ✅
-- Loki vs Elasticsearch — log storage
+- ~~Loki vs Elasticsearch — log storage~~ ✅
 - ~~Jaeger vs Zipkin — distributed tracing~~ ✅
 - ~~Zabbix vs Prometheus — monitoring systems~~ ✅
 

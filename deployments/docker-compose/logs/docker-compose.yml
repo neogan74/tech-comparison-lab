@@ -1,0 +1,33 @@
+services:
+  # Loki, single-binary mode with the image's built-in filesystem config
+  # (/etc/loki/local-config.yaml). Ingest + query share port 3100.
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: logs-loki
+    ports:
+      - "3100:3100"   # push + query (benchmark target)
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/ready || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+
+  # Elasticsearch, single-node with security disabled — the fair, apples-to-
+  # apples default that isolates ingest/query engine cost from auth overhead.
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: logs-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+    ports:
+      - "9200:9200"   # bulk ingest + query (benchmark target)
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
