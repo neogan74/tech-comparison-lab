@@ -1,7 +1,7 @@
 {
   "schema_version": "results-index/v1",
-  "generated_at": "2026-04-22T07:20:14Z",
-  "count": 5,
+  "generated_at": "2026-09-05T07:25:01Z",
+  "count": 10,
   "experiments": [
     {
       "id": "clickhouse-vs-postgresql",
@@ -185,6 +185,260 @@
       }
     },
     {
+      "id": "envoy-vs-nginx",
+      "name": "Envoy vs NGINX",
+      "category": "api",
+      "summary_file": "experiments/api/envoy-vs-nginx/results/summary.json",
+      "timestamp": "2026-09-05T07:20:25Z",
+      "mode": "full",
+      "result_count": 6,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "envoy-vs-nginx",
+          "name": "Envoy vs NGINX",
+          "category": "api",
+          "path": "experiments/api/envoy-vs-nginx"
+        },
+        "run_id": "rest-1788592825",
+        "timestamp": "2026-09-05T07:20:25Z",
+        "mode": "full",
+        "config": {
+          "count": 100000,
+          "workers": 50
+        },
+        "sources": [
+          {
+            "name": "nginx",
+            "file": "results/nginx.json"
+          },
+          {
+            "name": "envoy",
+            "file": "results/envoy.json"
+          }
+        ],
+        "results": [
+          {
+            "protocol": "rest",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 18.298,
+            "p95_ms": 79.156,
+            "p99_ms": 973.464,
+            "min_ms": 1.299,
+            "max_ms": 10007.334,
+            "mean_ms": 46.556340989999995,
+            "throughput_rps": 855.499706035745,
+            "errors": 20339,
+            "total_ms": 93116
+          },
+          {
+            "protocol": "rest",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 2.044,
+            "p95_ms": 3.798,
+            "p99_ms": 6.778,
+            "min_ms": 0.697,
+            "max_ms": 220.368,
+            "mean_ms": 2.4394001199999997,
+            "throughput_rps": 20487.304191120227,
+            "errors": 0,
+            "total_ms": 4881
+          },
+          {
+            "protocol": "rest",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 14.258,
+            "p95_ms": 74.66,
+            "p99_ms": 1171.543,
+            "min_ms": 0.873,
+            "max_ms": 9672.42,
+            "mean_ms": 47.7986929,
+            "throughput_rps": 954.3331524779665,
+            "errors": 8765,
+            "total_ms": 95600
+          },
+          {
+            "protocol": "rest",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 21.109,
+            "p95_ms": 98.051,
+            "p99_ms": 1131.666,
+            "min_ms": 1.106,
+            "max_ms": 10009.684,
+            "mean_ms": 56.9360932,
+            "throughput_rps": 720.2306059487252,
+            "errors": 17979,
+            "total_ms": 113881
+          },
+          {
+            "protocol": "rest",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 1.731,
+            "p95_ms": 3.439,
+            "p99_ms": 6.962,
+            "min_ms": 0.601,
+            "max_ms": 81.517,
+            "mean_ms": 2.00840906,
+            "throughput_rps": 24883.385828800492,
+            "errors": 0,
+            "total_ms": 4018
+          },
+          {
+            "protocol": "rest",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 14.575,
+            "p95_ms": 191.574,
+            "p99_ms": 1256.912,
+            "min_ms": 1.077,
+            "max_ms": 2254.844,
+            "mean_ms": 59.33411367,
+            "throughput_rps": 821.3444399653976,
+            "errors": 2521,
+            "total_ms": 118682
+          }
+        ]
+      }
+    },
+    {
+      "id": "graphql-vs-rest",
+      "name": "GraphQL vs REST",
+      "category": "api",
+      "summary_file": "experiments/api/graphql-vs-rest/results/summary.json",
+      "timestamp": "2026-06-30T18:22:40Z",
+      "mode": "full",
+      "result_count": 6,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "graphql-vs-rest",
+          "name": "GraphQL vs REST",
+          "category": "api",
+          "path": "experiments/api/graphql-vs-rest"
+        },
+        "run_id": "rest-1782843760",
+        "timestamp": "2026-06-30T18:22:40Z",
+        "mode": "full",
+        "config": {
+          "count": 100000,
+          "workers": 50
+        },
+        "sources": [
+          {
+            "name": "rest",
+            "file": "results/rest.json"
+          },
+          {
+            "name": "graphql",
+            "file": "results/graphql.json"
+          }
+        ],
+        "results": [
+          {
+            "protocol": "rest",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 2.523,
+            "p95_ms": 304.294,
+            "p99_ms": 1527.871,
+            "min_ms": 0.228,
+            "max_ms": 4718.312,
+            "mean_ms": 66.09531879999999,
+            "throughput_rps": 756.203893907966,
+            "errors": 0,
+            "total_ms": 132239
+          },
+          {
+            "protocol": "rest",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 0.657,
+            "p95_ms": 1.734,
+            "p99_ms": 40.322,
+            "min_ms": 0.039,
+            "max_ms": 1431.655,
+            "mean_ms": 3.89421567,
+            "throughput_rps": 12836.073337250698,
+            "errors": 0,
+            "total_ms": 7790
+          },
+          {
+            "protocol": "rest",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 2.981,
+            "p95_ms": 225.736,
+            "p99_ms": 1556.757,
+            "min_ms": 0.312,
+            "max_ms": 4426.779,
+            "mean_ms": 65.20669959,
+            "throughput_rps": 764.3806964714023,
+            "errors": 205,
+            "total_ms": 130556
+          },
+          {
+            "protocol": "graphql",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 0.646,
+            "p95_ms": 1.628,
+            "p99_ms": 26.717,
+            "min_ms": 0.034,
+            "max_ms": 745.899,
+            "mean_ms": 2.56379075,
+            "throughput_rps": 19495.090160275955,
+            "errors": 0,
+            "total_ms": 5129
+          },
+          {
+            "protocol": "graphql",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 0.621,
+            "p95_ms": 1.549,
+            "p99_ms": 2.054,
+            "min_ms": 0.036,
+            "max_ms": 39.311,
+            "mean_ms": 0.7704716899999999,
+            "throughput_rps": 64811.14341956693,
+            "errors": 0,
+            "total_ms": 1542
+          },
+          {
+            "protocol": "graphql",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 0.627,
+            "p95_ms": 1.515,
+            "p99_ms": 1.989,
+            "min_ms": 0.039,
+            "max_ms": 39.931,
+            "mean_ms": 0.73725768,
+            "throughput_rps": 67735.62133749643,
+            "errors": 0,
+            "total_ms": 1476
+          }
+        ]
+      }
+    },
+    {
       "id": "grpc-vs-rest",
       "name": "gRPC vs REST",
       "category": "api",
@@ -307,6 +561,133 @@
             "throughput_rps": 47371.58466418372,
             "errors": 0,
             "total_ms": 2110
+          }
+        ]
+      }
+    },
+    {
+      "id": "kong-vs-traefik",
+      "name": "Kong vs Traefik",
+      "category": "api",
+      "summary_file": "experiments/api/kong-vs-traefik/results/summary.json",
+      "timestamp": "2026-07-13T17:17:59Z",
+      "mode": "full",
+      "result_count": 6,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "kong-vs-traefik",
+          "name": "Kong vs Traefik",
+          "category": "api",
+          "path": "experiments/api/kong-vs-traefik"
+        },
+        "run_id": "rest-1783963079",
+        "timestamp": "2026-07-13T17:17:59Z",
+        "mode": "full",
+        "config": {
+          "count": 100000,
+          "workers": 50
+        },
+        "sources": [
+          {
+            "name": "kong",
+            "file": "results/kong.json"
+          },
+          {
+            "name": "traefik",
+            "file": "results/traefik.json"
+          }
+        ],
+        "results": [
+          {
+            "protocol": "rest",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 17.888,
+            "p95_ms": 89.381,
+            "p99_ms": 803.449,
+            "min_ms": 0.77,
+            "max_ms": 10025.889,
+            "mean_ms": 49.320352209999996,
+            "throughput_rps": 897.1325514545803,
+            "errors": 11499,
+            "total_ms": 98648
+          },
+          {
+            "protocol": "rest",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 4.449,
+            "p95_ms": 26.604,
+            "p99_ms": 52.248,
+            "min_ms": 0.298,
+            "max_ms": 236.43,
+            "mean_ms": 7.59139337,
+            "throughput_rps": 6584.519987607614,
+            "errors": 0,
+            "total_ms": 15187
+          },
+          {
+            "protocol": "rest",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 29.45,
+            "p95_ms": 162.153,
+            "p99_ms": 289.656,
+            "min_ms": 0.662,
+            "max_ms": 4842.319,
+            "mean_ms": 53.2750582,
+            "throughput_rps": 907.9705002503028,
+            "errors": 3244,
+            "total_ms": 106562
+          },
+          {
+            "protocol": "rest",
+            "op": "echo",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 31.857,
+            "p95_ms": 137.779,
+            "p99_ms": 456.455,
+            "min_ms": 0.629,
+            "max_ms": 2547.794,
+            "mean_ms": 52.19743655,
+            "throughput_rps": 905.7915551110283,
+            "errors": 5418,
+            "total_ms": 104419
+          },
+          {
+            "protocol": "rest",
+            "op": "get-user",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 2.364,
+            "p95_ms": 4.352,
+            "p99_ms": 44.957,
+            "min_ms": 0.612,
+            "max_ms": 100.087,
+            "mean_ms": 3.3176402400000002,
+            "throughput_rps": 15066.217437341691,
+            "errors": 0,
+            "total_ms": 6637
+          },
+          {
+            "protocol": "rest",
+            "op": "create-order",
+            "count": 100000,
+            "workers": 50,
+            "p50_ms": 33.572,
+            "p95_ms": 175.347,
+            "p99_ms": 555.244,
+            "min_ms": 0.621,
+            "max_ms": 2830.84,
+            "mean_ms": 60.314569580000004,
+            "throughput_rps": 826.7825634710612,
+            "errors": 259,
+            "total_ms": 120637
           }
         ]
       }
@@ -747,6 +1128,237 @@
               }
             ],
             "total_ms": 1172
+          }
+        ]
+      }
+    },
+    {
+      "id": "kubernetes-vs-docker-swarm",
+      "name": "Kubernetes vs Docker Swarm",
+      "category": "orchestration",
+      "summary_file": "experiments/orchestration/kubernetes-vs-docker-swarm/results/summary.json",
+      "timestamp": "2026-07-17T14:12:43.111312Z",
+      "mode": "smoke",
+      "result_count": 8,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "kubernetes-vs-docker-swarm",
+          "name": "Kubernetes vs Docker Swarm",
+          "category": "orchestration",
+          "path": "experiments/orchestration/kubernetes-vs-docker-swarm"
+        },
+        "run_id": "kubernetes-vs-docker-swarm-2026-07-17T14:12:43.111312Z",
+        "timestamp": "2026-07-17T14:12:43.111312Z",
+        "mode": "smoke",
+        "config": {
+          "rounds": 1,
+          "replicas": 3
+        },
+        "sources": [
+          {
+            "name": "kubernetes",
+            "file": "results/kubernetes.json"
+          },
+          {
+            "name": "swarm",
+            "file": "results/swarm.json"
+          }
+        ],
+        "results": [
+          {
+            "op": "deploy:1-replica",
+            "count": 1,
+            "p50_ms": 625.072,
+            "p95_ms": 625.072,
+            "p99_ms": 625.072,
+            "mean_ms": 625.072,
+            "min_ms": 625.072,
+            "max_ms": 625.072,
+            "errors": 0,
+            "platform": "kubernetes"
+          },
+          {
+            "op": "scale:1-to-3",
+            "count": 1,
+            "p50_ms": 617.303,
+            "p95_ms": 617.303,
+            "p99_ms": 617.303,
+            "mean_ms": 617.303,
+            "min_ms": 617.303,
+            "max_ms": 617.303,
+            "errors": 0,
+            "platform": "kubernetes"
+          },
+          {
+            "op": "recover:1-instance",
+            "count": 1,
+            "p50_ms": 643.387,
+            "p95_ms": 643.387,
+            "p99_ms": 643.387,
+            "mean_ms": 643.387,
+            "min_ms": 643.387,
+            "max_ms": 643.387,
+            "errors": 0,
+            "platform": "kubernetes"
+          },
+          {
+            "op": "scale:3-to-1",
+            "count": 1,
+            "p50_ms": 209.168,
+            "p95_ms": 209.168,
+            "p99_ms": 209.168,
+            "mean_ms": 209.168,
+            "min_ms": 209.168,
+            "max_ms": 209.168,
+            "errors": 0,
+            "platform": "kubernetes"
+          },
+          {
+            "op": "deploy:1-replica",
+            "count": 1,
+            "p50_ms": 10852.437,
+            "p95_ms": 10852.437,
+            "p99_ms": 10852.437,
+            "mean_ms": 10852.437,
+            "min_ms": 10852.437,
+            "max_ms": 10852.437,
+            "errors": 0,
+            "platform": "swarm"
+          },
+          {
+            "op": "scale:1-to-3",
+            "count": 1,
+            "p50_ms": 1640.602,
+            "p95_ms": 1640.602,
+            "p99_ms": 1640.602,
+            "mean_ms": 1640.602,
+            "min_ms": 1640.602,
+            "max_ms": 1640.602,
+            "errors": 0,
+            "platform": "swarm"
+          },
+          {
+            "op": "recover:1-instance",
+            "count": 1,
+            "p50_ms": 5659.908,
+            "p95_ms": 5659.908,
+            "p99_ms": 5659.908,
+            "mean_ms": 5659.908,
+            "min_ms": 5659.908,
+            "max_ms": 5659.908,
+            "errors": 0,
+            "platform": "swarm"
+          },
+          {
+            "op": "scale:3-to-1",
+            "count": 1,
+            "p50_ms": 8.706,
+            "p95_ms": 8.706,
+            "p99_ms": 8.706,
+            "mean_ms": 8.706,
+            "min_ms": 8.706,
+            "max_ms": 8.706,
+            "errors": 0,
+            "platform": "swarm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "argocd-vs-fluxcd",
+      "name": "Argo CD vs Flux CD",
+      "category": "platform",
+      "summary_file": "experiments/platform/argocd-vs-fluxcd/results/summary.json",
+      "timestamp": "2026-07-09T19:06:15Z",
+      "mode": "full",
+      "result_count": 6,
+      "summary": {
+        "schema_version": "results-summary/v1",
+        "experiment": {
+          "id": "argocd-vs-fluxcd",
+          "name": "Argo CD vs Flux CD",
+          "category": "platform",
+          "path": "experiments/platform/argocd-vs-fluxcd"
+        },
+        "run_id": "argocd-vs-fluxcd-2026-07-09T19:06:15Z",
+        "timestamp": "2026-07-09T19:06:15Z",
+        "mode": "full",
+        "config": {
+          "count": 20,
+          "bulk_size": 10,
+          "sync_timeout": "300s"
+        },
+        "sources": [
+          {
+            "name": "argocd",
+            "file": "results/argocd.json"
+          },
+          {
+            "name": "flux",
+            "file": "results/flux.json"
+          }
+        ],
+        "results": [
+          {
+            "tool": "argocd",
+            "op": "sync-latency",
+            "count": 20,
+            "p50_ms": 19677.483,
+            "p95_ms": 20223.406,
+            "p99_ms": 20342.745,
+            "min_ms": 479.342,
+            "max_ms": 20342.745,
+            "mean_ms": 13452.23025,
+            "total_ms": 269044
+          },
+          {
+            "tool": "argocd",
+            "op": "reconcile",
+            "count": 20,
+            "p50_ms": 162043.948,
+            "p95_ms": 162237.895,
+            "p99_ms": 162342.493,
+            "min_ms": 18692.214,
+            "max_ms": 162342.493,
+            "mean_ms": 149411.66634999998,
+            "total_ms": 2988233
+          },
+          {
+            "tool": "argocd",
+            "op": "bulk",
+            "count": 10,
+            "total_ms": 14161
+          },
+          {
+            "tool": "flux",
+            "op": "sync-latency",
+            "count": 20,
+            "p50_ms": 9904.762,
+            "p95_ms": 10614.418,
+            "p99_ms": 10734.805,
+            "min_ms": 7121.28,
+            "max_ms": 10734.805,
+            "mean_ms": 9853.33765,
+            "total_ms": 197066
+          },
+          {
+            "tool": "flux",
+            "op": "reconcile",
+            "count": 20,
+            "p50_ms": 10103.594,
+            "p95_ms": 10615.967,
+            "p99_ms": 10646.046,
+            "min_ms": 9585.159,
+            "max_ms": 10646.046,
+            "mean_ms": 10129.714800000002,
+            "total_ms": 202594
+          },
+          {
+            "tool": "flux",
+            "op": "bulk",
+            "count": 10,
+            "total_ms": 16161
           }
         ]
       }

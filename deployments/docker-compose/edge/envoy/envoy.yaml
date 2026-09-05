@@ -1,0 +1,65 @@
+# Envoy static bootstrap for the Envoy vs NGINX experiment.
+# One listener on :80 with a catch-all route to the shared bench-api on the
+# host, mirroring the NGINX `proxy_pass` config as closely as possible.
+# The admin interface on :9901 serves /stats/prometheus for Prometheus.
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+
+static_resources:
+  listeners:
+    - name: ingress
+      # :10000 rather than :80 — the official Envoy image runs as the
+      # unprivileged `envoy` user and cannot bind a privileged port. The
+      # published host port (8094) is what the benchmark talks to either way.
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 10000
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                # Access logging off — NGINX runs with access_log off too.
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: bench_api
+                      domains: ["*"]
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: bench_api
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: bench_api
+      type: STRICT_DNS
+      connect_timeout: 1s
+      lb_policy: ROUND_ROBIN
+      # host.docker.internal also resolves to an (unroutable) IPv6 address in
+      # Docker Desktop; AUTO would prefer it and every request would 503.
+      dns_lookup_family: V4_ONLY
+      # Keep-alive upstream connections, same intent as NGINX `keepalive 32`.
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http_protocol_options: {}
+      load_assignment:
+        cluster_name: bench_api
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: host.docker.internal
+                      port_value: 8080
