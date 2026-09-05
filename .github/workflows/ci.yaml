@@ -1102,3 +1102,47 @@ jobs:
           SMOKE_SERVICES: 10
           SMOKE_ITER: 2
         run: bash ./scripts/smoke-jaeger-vs-zipkin.sh
+
+  validate-loki-vs-elasticsearch:
+    name: Validate Loki vs Elasticsearch experiment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-logs/go.mod
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Run validation script
+        run: bash ./scripts/validate-loki-vs-elasticsearch.sh
+
+  smoke-loki-vs-elasticsearch:
+    name: Smoke Loki vs Elasticsearch experiment
+    runs-on: ubuntu-latest
+    needs: validate-loki-vs-elasticsearch
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: benchmarks/loadgen-logs/go.mod
+
+      - name: Verify Docker Compose availability
+        run: docker compose version
+
+      - name: Run smoke benchmark
+        env:
+          SMOKE_COUNT: 5000
+          SMOKE_SERVICES: 10
+          SMOKE_ITER: 2
+        run: bash ./scripts/smoke-loki-vs-elasticsearch.sh
