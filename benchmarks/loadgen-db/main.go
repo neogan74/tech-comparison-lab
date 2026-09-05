@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	db := flag.String("db", "", "database: postgres | mongo | mysql | cockroachdb | cassandra (required)")
+	db := flag.String("db", "", "database: postgres | mongo | mysql | cockroachdb | cassandra | scylladb (required)")
 	op := flag.String("op", "all", "operation: insert | query | agg | update | all")
 	count := flag.Int("count", 100000, "number of documents to insert")
 	queryIter := flag.Int("query-iter", 0, "query iterations (default: min(count,1000))")
@@ -32,12 +32,12 @@ func main() {
 	flag.Parse()
 
 	if *db == "" {
-		fmt.Fprintln(os.Stderr, "error: --db is required (postgres | mongo | mysql | cockroachdb | cassandra)")
+		fmt.Fprintln(os.Stderr, "error: --db is required (postgres | mongo | mysql | cockroachdb | cassandra | scylladb)")
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *db != "postgres" && *db != "mongo" && *db != "mysql" && *db != "cockroachdb" && *db != "cassandra" {
-		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo or mysql or cockroachdb or cassandra\n", *db)
+	if *db != "postgres" && *db != "mongo" && *db != "mysql" && *db != "cockroachdb" && *db != "cassandra" && *db != "scylladb" {
+		fmt.Fprintf(os.Stderr, "error: unknown --db %q, want postgres or mongo or mysql or cockroachdb or cassandra or scylladb\n", *db)
 		os.Exit(1)
 	}
 
@@ -65,11 +65,13 @@ func main() {
 			*dsn = os.Getenv("CRDB_DSN")
 		case "cassandra":
 			*dsn = os.Getenv("CASSANDRA_DSN")
+		case "scylladb":
+			*dsn = os.Getenv("SCYLLA_DSN")
 		}
 	}
 	if *dsn == "" {
 		fmt.Fprintf(os.Stderr, "error: --dsn not set and %s env var is empty\n",
-			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN", "mysql": "MYSQL_DSN", "cockroachdb": "CRDB_DSN", "cassandra": "CASSANDRA_DSN"}[*db])
+			map[string]string{"postgres": "PG_DSN", "mongo": "MONGO_DSN", "mysql": "MYSQL_DSN", "cockroachdb": "CRDB_DSN", "cassandra": "CASSANDRA_DSN", "scylladb": "SCYLLA_DSN"}[*db])
 		os.Exit(1)
 	}
 
@@ -87,6 +89,8 @@ func main() {
 		results = runCockroachDB(ctx, *dsn, cfg)
 	case "cassandra":
 		results = runCassandra(ctx, *dsn, cfg)
+	case "scylladb":
+		results = runScyllaDB(ctx, *dsn, cfg)
 	}
 
 	if len(results) > 0 {
@@ -168,6 +172,13 @@ func validateConfig(db string, cfg runConfig) error {
 			"all":    true,
 		},
 		"cassandra": {
+			"insert": true,
+			"query":  true,
+			"agg":    true,
+			"update": true,
+			"all":    true,
+		},
+		"scylladb": {
 			"insert": true,
 			"query":  true,
 			"agg":    true,
@@ -505,6 +516,64 @@ func runCassandra(ctx context.Context, dsn string, cfg runConfig) []report.Resul
 			log.Fatalf("cassandra update: %v", err)
 		}
 		results = append(results, report.Compute("cassandra", "update", cfg.updateIter, 1, durs, total))
+	}
+	return results
+}
+
+// runScyllaDB reuses the Cassandra CQL driver: ScyllaDB is wire-compatible
+// with the Cassandra Query Language, so the same bucketed data model and
+// queries apply unchanged, against a different cluster.
+func runScyllaDB(ctx context.Context, dsn string, cfg runConfig) []report.Result {
+	bench, err := csbench.New(dsn)
+	if err != nil {
+		log.Fatalf("scylladb connect: %v", err)
+	}
+	defer bench.Close()
+	fmt.Println("scylladb: connected OK")
+
+	if cfg.dryRun {
+		return nil
+	}
+	if cfg.truncate {
+		if err := bench.Truncate(ctx); err != nil {
+			log.Fatalf("scylladb truncate: %v", err)
+		}
+		fmt.Println("scylladb: truncated orders_by_country table")
+	}
+
+	var results []report.Result
+	if cfg.op == "insert" || cfg.op == "all" {
+		fmt.Printf("scylladb: insert %d docs (chunk=%d workers=%d)...\n", cfg.count, cfg.batch, cfg.workers)
+		durs, total, err := bench.Insert(ctx, cfg.count, cfg.batch, cfg.workers)
+		if err != nil {
+			log.Fatalf("scylladb insert: %v", err)
+		}
+		results = append(results, report.Compute("scylladb", "insert", cfg.count, cfg.workers, durs, total))
+		fmt.Printf("scylladb: insert done in %s\n", total.Round(time.Millisecond))
+	}
+	if cfg.op == "query" || cfg.op == "all" {
+		fmt.Printf("scylladb: query %d iterations...\n", cfg.queryIter)
+		durs, total, err := bench.Query(ctx, cfg.queryIter)
+		if err != nil {
+			log.Fatalf("scylladb query: %v", err)
+		}
+		results = append(results, report.Compute("scylladb", "query", cfg.queryIter, 1, durs, total))
+	}
+	if cfg.op == "agg" || cfg.op == "all" {
+		fmt.Printf("scylladb: agg %d iterations...\n", cfg.aggIter)
+		durs, total, err := bench.Agg(ctx, cfg.aggIter)
+		if err != nil {
+			log.Fatalf("scylladb agg: %v", err)
+		}
+		results = append(results, report.Compute("scylladb", "agg", cfg.aggIter, 1, durs, total))
+	}
+	if cfg.op == "update" || cfg.op == "all" {
+		fmt.Printf("scylladb: update %d iterations...\n", cfg.updateIter)
+		durs, total, err := bench.Update(ctx, cfg.updateIter)
+		if err != nil {
+			log.Fatalf("scylladb update: %v", err)
+		}
+		results = append(results, report.Compute("scylladb", "update", cfg.updateIter, 1, durs, total))
 	}
 	return results
 }
